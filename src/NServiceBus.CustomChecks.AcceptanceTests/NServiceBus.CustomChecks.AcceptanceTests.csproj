@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net452</TargetFramework>
+    <DebugType>full</DebugType>
+    <DebugSymbols>True</DebugSymbols>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="When_registering_custom_check_in_send_only_endpoint.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NServiceBus" Version="6.*" />
+    <PackageReference Include="NServiceBus.AcceptanceTesting" Version="6.*" />
+    <PackageReference Include="NUnit" Version="3.7.1" />
+    <ProjectReference Include="..\NServiceBus.CustomChecks\NServiceBus.CustomChecks.csproj" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Messaging" />
+  </ItemGroup>
+</Project>
