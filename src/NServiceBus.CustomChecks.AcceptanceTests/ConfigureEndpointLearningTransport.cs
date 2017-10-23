@@ -10,10 +10,10 @@ public class ConfigureEndpointLearningTransport : IConfigureEndpointTestExecutio
 {
     public Task Cleanup()
     {
-        //if (Directory.Exists(storageDir))
-        //{
-        //    Directory.Delete(storageDir, true);
-        //}
+        if (Directory.Exists(storageDir))
+        {
+            Directory.Delete(storageDir, true);
+        }
 
         return Task.FromResult(0);
     }

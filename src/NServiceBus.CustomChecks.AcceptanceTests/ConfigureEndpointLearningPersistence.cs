@@ -37,10 +37,10 @@ public class ConfigureEndpointLearningPersistence : IConfigureEndpointTestExecut
 
     public Task Cleanup()
     {
-        //if (Directory.Exists(storageDir))
-        //{
-        //    Directory.Delete(storageDir, true);
-        //}
+        if (Directory.Exists(storageDir))
+        {
+            Directory.Delete(storageDir, true);
+        }
         return Task.FromResult(0);
     }
 
