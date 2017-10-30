@@ -2,11 +2,10 @@
 using System.IO;
 using System.Threading.Tasks;
 using NServiceBus;
-using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.Transport;
 using NUnit.Framework;
 
-public class ConfigureEndpointLearningTransport : IConfigureEndpointTestExecution
+public class ConfigureEndpointLearningTransport
 {
     public Task Cleanup()
     {
@@ -18,7 +17,7 @@ public class ConfigureEndpointLearningTransport : IConfigureEndpointTestExecutio
         return Task.FromResult(0);
     }
 
-    public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
+    public Task Configure(EndpointConfiguration configuration)
     {
         var testRunId = TestContext.CurrentContext.Test.ID;
 

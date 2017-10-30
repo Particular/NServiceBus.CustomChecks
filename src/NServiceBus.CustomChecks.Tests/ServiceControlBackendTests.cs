@@ -2,10 +2,10 @@
 {
     using System;
     using System.Text;
-    using ApprovalTests;
     using ApprovalTests.Reporters;
     using CustomChecks;
     using NUnit.Framework;
+    using SagaAudit.Tests;
     using ServiceControl.Plugin.CustomChecks.Messages;
 
     [TestFixture]
@@ -26,7 +26,7 @@
                 FailureReason = "Failure reason.",
                 HasFailed = true
             });
-            Approvals.Verify(Encoding.UTF8.GetString(body));
+            TestApprover.Verify(Encoding.UTF8.GetString(body));
         }
     }
 }
