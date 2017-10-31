@@ -49,7 +49,7 @@
             {
                 EndpointSetup<DefaultServer>(c =>
                 {
-                    var receiverEndpoint = NServiceBus.AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(FakeServiceControl));
+                    var receiverEndpoint = AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(FakeServiceControl));
 
                     c.ReportCustomChecksTo(receiverEndpoint);
                 });

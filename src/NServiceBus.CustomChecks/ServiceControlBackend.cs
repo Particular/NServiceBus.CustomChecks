@@ -10,7 +10,6 @@
     using Routing;
     using SimpleJson;
     using Transport;
-    using Unicast.Transport;
 
     class ServiceControlBackend
     {
