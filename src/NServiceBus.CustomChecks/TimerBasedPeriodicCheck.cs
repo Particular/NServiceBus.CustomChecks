@@ -9,11 +9,12 @@ namespace NServiceBus.CustomChecks
     {
         static ILog Logger = LogManager.GetLogger(typeof(TimerBasedPeriodicCheck));
 
-        public TimerBasedPeriodicCheck(ICustomCheck customCheck, ServiceControlBackend serviceControlBackend, Func<string, string, CheckResult, ReportCustomCheckResult> messageFactory)
+        public TimerBasedPeriodicCheck(ICustomCheck customCheck, ServiceControlBackend serviceControlBackend, Func<string, string, CheckResult, ReportCustomCheckResult> messageFactory, TimeSpan ttl)
         {
             this.customCheck = customCheck;
             this.serviceControlBackend = serviceControlBackend;
             this.messageFactory = messageFactory;
+            this.ttl = ttl;
         }
 
         public void Start()
@@ -44,7 +45,7 @@ namespace NServiceBus.CustomChecks
             try
             {
                 var checkResult = messageFactory(customCheck.Id, customCheck.Category, result);
-                await serviceControlBackend.Send(checkResult, customCheck.Interval.HasValue ? TimeSpan.FromTicks( customCheck.Interval.Value.Ticks*4) : TimeSpan.MaxValue).ConfigureAwait(false);
+                await serviceControlBackend.Send(checkResult, ttl).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -55,6 +56,7 @@ namespace NServiceBus.CustomChecks
         ICustomCheck customCheck;
         ServiceControlBackend serviceControlBackend;
         Func<string, string, CheckResult, ReportCustomCheckResult> messageFactory;
+        TimeSpan ttl;
         AsyncTimer timer;
     }
 }

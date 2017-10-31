@@ -11,11 +11,12 @@
 
     class CustomChecksStartup : FeatureStartupTask
     {
-        public CustomChecksStartup(IEnumerable<ICustomCheck> customChecks, IDispatchMessages dispatcher, ServiceControlBackend backend, HostInformation hostInfo, string endpointName)
+        public CustomChecksStartup(IEnumerable<ICustomCheck> customChecks, IDispatchMessages dispatcher, ServiceControlBackend backend, HostInformation hostInfo, string endpointName, TimeSpan? ttl)
         {
             this.backend = backend;
             this.hostInfo = hostInfo;
             this.endpointName = endpointName;
+            this.ttl = ttl;
             this.dispatcher = dispatcher;
             this.customChecks = customChecks.ToList();
         }
@@ -32,6 +33,10 @@
 
             foreach (var check in customChecks)
             {
+                var checkTtl = check.Interval.HasValue
+                    ? ttl ?? TimeSpan.FromTicks(check.Interval.Value.Ticks * 4)
+                    : TimeSpan.MaxValue;
+
                 var timerBasedPeriodicCheck = new TimerBasedPeriodicCheck(check, backend, (id, category, result) => new ReportCustomCheckResult
                 {
                     CustomCheckId = id,
@@ -42,7 +47,7 @@
                     EndpointName = endpointName,
                     Host = hostInfo.DisplayName,
                     HostId = hostInfo.HostId
-                });
+                }, checkTtl);
                 timerBasedPeriodicCheck.Start();
 
                 timerPeriodicChecks.Add(timerBasedPeriodicCheck);
@@ -66,5 +71,6 @@
         ServiceControlBackend backend;
         HostInformation hostInfo;
         string endpointName;
+        TimeSpan? ttl;
     }
 }

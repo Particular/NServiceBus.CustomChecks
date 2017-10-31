@@ -1,5 +1,6 @@
 ﻿namespace NServiceBus.CustomChecks
 {
+    using System;
     using System.Linq;
     using Features;
     using Hosting;
@@ -20,10 +21,13 @@
                 ? context.Settings.LocalAddress() 
                 : null;
 
+            TimeSpan? ttl;
+            context.Settings.TryGet("NServiceBus.CustomChecks.Ttl", out ttl);
+
             var serviceControlQueue = context.Settings.Get<string>("NServiceBus.CustomChecks.Queue");
             var backend = new ServiceControlBackend(serviceControlQueue, replyToAddress);
 
-            context.RegisterStartupTask(b => new CustomChecksStartup(b.BuildAll<ICustomCheck>(), b.Build<IDispatchMessages>(), backend, b.Build<HostInformation>(), context.Settings.EndpointName()));
+            context.RegisterStartupTask(b => new CustomChecksStartup(b.BuildAll<ICustomCheck>(), b.Build<IDispatchMessages>(), backend, b.Build<HostInformation>(), context.Settings.EndpointName(), ttl));
         }
     }
 }
