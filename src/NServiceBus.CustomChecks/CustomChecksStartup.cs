@@ -20,15 +20,15 @@
             this.customChecks = customChecks.ToList();
         }
 
-        protected override async Task OnStart(IMessageSession session)
+        protected override Task OnStart(IMessageSession session)
         {
             if (!customChecks.Any())
             {
-                return;
+                return Task.FromResult(0);
             }
 
             timerPeriodicChecks = new List<TimerBasedPeriodicCheck>(customChecks.Count);
-            await backend.Start(dispatcher).ConfigureAwait(false);
+            backend.Start(dispatcher);
 
             foreach (var check in customChecks)
             {
@@ -47,6 +47,7 @@
 
                 timerPeriodicChecks.Add(timerBasedPeriodicCheck);
             }
+            return Task.FromResult(0);
         }
 
         protected override async Task OnStop(IMessageSession session)
