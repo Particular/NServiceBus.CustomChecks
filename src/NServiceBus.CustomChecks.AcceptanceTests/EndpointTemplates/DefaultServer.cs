@@ -41,13 +41,13 @@
             configuration.SendFailedMessagesTo("error");
             configuration.UseSerialization<JsonSerializer>();
 
+            configurationBuilderCustomization(configuration);
+
             await configuration.DefineTransport(runDescriptor, endpointConfiguration).ConfigureAwait(false);
 
             configuration.RegisterComponentsAndInheritanceHierarchy(runDescriptor);
 
             await configuration.DefinePersistence(runDescriptor, endpointConfiguration).ConfigureAwait(false);
-
-            configurationBuilderCustomization(configuration);
 
             return configuration;
         }

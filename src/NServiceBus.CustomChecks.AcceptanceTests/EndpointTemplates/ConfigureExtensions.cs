@@ -2,12 +2,18 @@
 {
     using System.Threading.Tasks;
     using AcceptanceTesting.Support;
+    using Configuration.AdvanceExtensibility;
     using ObjectBuilder;
+    using Transport;
 
     public static class ConfigureExtensions
     {
         public static async Task DefineTransport(this EndpointConfiguration config, RunDescriptor runDescriptor, EndpointCustomizationConfiguration endpointCustomizationConfiguration)
         {
+            if (config.GetSettings().HasSetting<TransportDefinition>())
+            {
+                return;
+            }
             var transportConfiguration = new ConfigureEndpointLearningTransport();
             await transportConfiguration.Configure(config);
             runDescriptor.OnTestCompleted(_ => transportConfiguration.Cleanup());
