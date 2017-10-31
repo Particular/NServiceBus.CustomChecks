@@ -1,6 +1,5 @@
 ﻿namespace NServiceBus.CustomChecks.AcceptanceTests
 {
-    using System.Threading.Tasks;
     using AcceptanceTesting;
     using NServiceBus;
     using NServiceBus.AcceptanceTests;
@@ -10,9 +9,9 @@
     class When_no_custom_checks_exist : NServiceBusAcceptanceTest
     {
         [Test]
-        public async Task The_endpoint_should_start_normally()
+        public void The_endpoint_should_start_normally()
         {
-            await Scenario.Define<Context>()
+            Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When(ms => ms.SendLocal(new MyMessage())))
                 .Done(c => c.HandlerCalled)
                 .Run();
@@ -35,10 +34,9 @@
             public class MyMessageHandler : IHandleMessages<MyMessage>
             {
                 public Context TestContext { get; set; }
-                public Task Handle(MyMessage message, IMessageHandlerContext context)
+                public void Handle(MyMessage message)
                 {
                     TestContext.HandlerCalled = true;
-                    return Task.FromResult(0);
                 }
             }
         }

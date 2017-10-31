@@ -1,37 +1,32 @@
 ﻿namespace NServiceBus.CustomChecks.AcceptanceTests
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading.Tasks;
     using AcceptanceTesting;
-    using Configuration.AdvanceExtensibility;
+    using AcceptanceTesting.Customization;
     using CustomChecks;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
-    using Performance.TimeToBeReceived;
-    using Transport;
+    using Satellites;
 
     public class When_not_setting_ttl : NServiceBusAcceptanceTest
     {
+        static string DetectorAddress => Conventions.EndpointNamingConvention(typeof(Sender)) + ".Detector";
+
         [Test]
-        public async Task Should_use_four_times_the_interval_value_for_ttl()
+        public void Should_use_four_times_the_interval_value_for_ttl()
         {
-            var context = await Scenario.Define<Context>()
-                .WithEndpoint<Sender>(c => c.CustomConfig((cfg, ctx) => cfg.GetSettings().Set("InMemQueue", ctx.Queue)))
-                .Done(c => c.Queue.Count > 0)
+            var result = Scenario.Define<Context>()
+                .WithEndpoint<Sender>()
+                .Done(c => c.DetectedMessage != null)
                 .Run();
 
-            var message = context.Queue.Dequeue();
-
-            var constraint = message.UnicastTransportOperations.First().DeliveryConstraints.OfType<DiscardIfNotReceivedBefore>().First();
-            Assert.AreEqual(TimeSpan.FromSeconds(4), constraint.MaxTime);
+            Assert.AreEqual(TimeSpan.FromSeconds(4), result.DetectedMessage.TimeToBeReceived);
         }
 
         class Context : ScenarioContext
         {
-            public Queue<TransportOperations> Queue { get; } = new Queue<TransportOperations>();
+            public TransportMessage DetectedMessage { get; set; }
         }
 
         class Sender : EndpointConfigurationBuilder
@@ -40,10 +35,31 @@
             {
                 EndpointSetup<DefaultServer>(c =>
                 {
-                    c.ReportCustomChecksTo("ServiceControl");
-                    c.UseTransport<InMemoryTransport>();
-                    c.SendOnly();
+                    c.ReportCustomChecksTo(DetectorAddress);
                 });
+            }
+
+            class Detector : ISatellite
+            {
+                public Context Context { get; set; }
+
+                public bool Handle(TransportMessage message)
+                {
+                    Context.DetectedMessage = message;
+                    return true;
+                }
+
+                public void Start()
+                {
+                }
+
+                public void Stop()
+                {
+                }
+
+                public Address InputAddress => Address.Parse(DetectorAddress);
+
+                public bool Disabled => false;
             }
 
             class FailingCustomCheck : CustomCheck
@@ -53,7 +69,7 @@
                 {
                 }
 
-                public override Task<CheckResult> PerformCheck()
+                public override CheckResult PerformCheck()
                 {
                     return CheckResult.Pass;
                 }
