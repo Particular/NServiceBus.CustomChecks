@@ -3,11 +3,13 @@
     using System;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using Config;
     using CustomChecks;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using Satellites;
+    using Transports;
 
     public class When_not_setting_ttl : NServiceBusAcceptanceTest
     {
@@ -39,7 +41,7 @@
                 });
             }
 
-            class Detector : ISatellite
+            class Detector : ISatellite, IWantToRunWhenConfigurationIsComplete
             {
                 public Context Context { get; set; }
 
@@ -60,6 +62,11 @@
                 public Address InputAddress => Address.Parse(DetectorAddress);
 
                 public bool Disabled => false;
+                public void Run(Configure config)
+                {
+                    var queueCreator = config.Builder.Build<ICreateQueues>();
+                    queueCreator.CreateQueueIfNecessary(InputAddress, null);
+                }
             }
 
             class FailingCustomCheck : CustomCheck
