@@ -30,6 +30,6 @@ namespace NServiceBus
 {
     public class static CustomChecksConfigurationExtensions
     {
-        public static void ReportCustomChecksTo(this NServiceBus.EndpointConfiguration config, string serviceControlQueue) { }
+        public static void ReportCustomChecksTo(this NServiceBus.EndpointConfiguration config, string serviceControlQueue, System.Nullable<System.TimeSpan> timeToLive = null) { }
     }
 }

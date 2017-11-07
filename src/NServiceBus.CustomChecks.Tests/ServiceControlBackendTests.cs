@@ -1,18 +1,18 @@
 ﻿namespace NServiceBus.CustomChecks.Tests
 {
     using System;
+    using System.Runtime.CompilerServices;
     using System.Text;
-    using ApprovalTests.Reporters;
     using CustomChecks;
     using NUnit.Framework;
     using SagaAudit.Tests;
     using ServiceControl.Plugin.CustomChecks.Messages;
 
     [TestFixture]
-    [UseReporter(typeof(DiffReporter))]
     public class ServiceControlBackendTests
     {
         [Test]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public void It_can_serialize_RegisterCustomCheckResult()
         {
             var body = ServiceControlBackend.Serialize(new ReportCustomCheckResult
