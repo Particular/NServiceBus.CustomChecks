@@ -1,20 +1,19 @@
 ﻿namespace NServiceBus.CustomChecks.Tests
 {
     using System.IO;
-    using ApprovalTests;
-    using ApprovalTests.Namers;
     using NUnit.Framework;
 
     static class TestApprover
     {
+#if NET452
         public static void Verify(string text)
         {
-            var writer = new ApprovalTextWriter(text);
+            var writer = new ApprovalTests.ApprovalTextWriter(text);
             var namer = new ApprovalNamer();
-            Approvals.Verify(writer, namer, Approvals.GetReporter());
+            ApprovalTests.Approvals.Verify(writer, namer, ApprovalTests.Approvals.GetReporter());
         }
 
-        class ApprovalNamer : UnitTestFrameworkNamer
+        class ApprovalNamer : ApprovalTests.Namers.UnitTestFrameworkNamer
         {
             public ApprovalNamer()
             {
@@ -28,5 +27,11 @@
 
             readonly string sourcePath;
         }
+#else
+        public static void Verify(string text)
+        {
+            Assert.Inconclusive("ApprovalTests only work in full .NET");
+        }
+#endif
     }
 }
