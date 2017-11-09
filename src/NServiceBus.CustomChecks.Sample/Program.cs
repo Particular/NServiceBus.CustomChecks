@@ -6,14 +6,17 @@ class Program
 {
     static void Main()
     {
+	    Console.Title = "NServiceBus.CustomChecks.Sample";
+
         var busConfiguration = new BusConfiguration();
+        busConfiguration.EndpointName("NServiceBus.CustomChecks.Sample");
 
         busConfiguration.UsePersistence<InMemoryPersistence>();
         busConfiguration.ReportCustomChecksTo("Particular.ServiceControl");
 
         using (Bus.CreateSendOnly(busConfiguration))
         {
-            Console.Out.WriteLine("Press a key to quit bus");
+            Console.WriteLine("Press any key to exit");
             Console.ReadKey();
         }
     }
