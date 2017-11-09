@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
     using AcceptanceTesting;
     using CustomChecks;
     using NServiceBus;
@@ -13,9 +14,9 @@
     public class When_registering_custom_check_in_send_only_endpoint : NServiceBusAcceptanceTest
     {
         [Test]
-        public void Should_send_result_to_service_control()
+        public async Task Should_send_result_to_service_control()
         {
-            var context = Scenario.Define<Context>()
+            var context = await Scenario.Define<Context>()
                 .WithEndpoint<FakeServiceControl>()
                 .WithEndpoint<Sender>()
                 .Done(c => c.WasCalled)
@@ -38,7 +39,7 @@
             public string CustomCheckId { get; set; }
             public string Category { get; set; }
             public DateTime ReportedAt { get; set; }
-            public IDictionary<string, string> Headers { get; set; }
+            public IReadOnlyDictionary<string, string> Headers { get; set; }
         }
 
         class Sender : EndpointConfigurationBuilder
@@ -49,7 +50,8 @@
                 {
                     var receiverEndpoint = AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(FakeServiceControl));
                     c.ReportCustomChecksTo(receiverEndpoint);
-                }).SendOnly();
+                    c.SendOnly();
+                });
             }
 
             class FailingCustomCheck : CustomCheck
@@ -59,7 +61,7 @@
                 {
                 }
 
-                public override CheckResult PerformCheck()
+                public override Task<CheckResult> PerformCheck()
                 {
                     return CheckResult.Pass;
                 }
@@ -77,16 +79,16 @@
             public class MyMessageHandler : IHandleMessages<ReportCustomCheckResult>
             {
                 public Context TestContext { get; set; }
-                public IBus Bus { get; set; }
 
-                public void Handle(ReportCustomCheckResult message)
+                public Task Handle(ReportCustomCheckResult message, IMessageHandlerContext context)
                 {
                     TestContext.FailureReason = message.FailureReason;
                     TestContext.CustomCheckId = message.CustomCheckId;
                     TestContext.Category = message.Category;
                     TestContext.ReportedAt = message.ReportedAt;
-                    TestContext.Headers = Bus.CurrentMessageContext.Headers;
+                    TestContext.Headers = context.MessageHeaders;
                     TestContext.WasCalled = true;
+                    return Task.FromResult(0);
                 }
             }
         }

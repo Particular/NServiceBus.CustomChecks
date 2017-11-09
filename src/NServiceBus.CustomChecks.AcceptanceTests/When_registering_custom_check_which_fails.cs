@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.CustomChecks.AcceptanceTests
 {
     using System;
+    using System.Threading.Tasks;
     using AcceptanceTesting;
     using CustomChecks;
     using NServiceBus;
@@ -12,9 +13,9 @@
     public class When_registering_custom_check_which_fails : NServiceBusAcceptanceTest
     {
         [Test]
-        public void Should_send_result_to_service_control()
+        public async Task Should_send_result_to_service_control()
         {
-            var context = Scenario.Define<Context>()
+            var context = await Scenario.Define<Context>()
                 .WithEndpoint<FakeServiceControl>()
                 .WithEndpoint<Sender>()
                 .Done(c => c.WasCalled)
@@ -54,7 +55,7 @@
                 {
                 }
 
-                public override CheckResult PerformCheck()
+                public override Task<CheckResult> PerformCheck()
                 {
                     return CheckResult.Failed("Some reason");
                 }
@@ -73,13 +74,14 @@
             {
                 public Context TestContext { get; set; }
 
-                public void Handle(ReportCustomCheckResult message)
+                public Task Handle(ReportCustomCheckResult message, IMessageHandlerContext context)
                 {
                     TestContext.FailureReason = message.FailureReason;
                     TestContext.CustomCheckId = message.CustomCheckId;
                     TestContext.Category = message.Category;
                     TestContext.ReportedAt = message.ReportedAt;
                     TestContext.WasCalled = true;
+                    return Task.FromResult(0);
                 }
             }
         }

@@ -1,33 +1,28 @@
 ﻿namespace NServiceBus.CustomChecks
 {
     using System;
+    using System.Collections.Generic;
     using System.Text;
+    using System.Threading.Tasks;
+    using DeliveryConstraints;
+    using Extensibility;
+    using Performance.TimeToBeReceived;
+    using Routing;
     using SimpleJson;
-    using Transports;
-    using Unicast;
+    using Transport;
 
     class ServiceControlBackend
     {
-        public ServiceControlBackend(ISendMessages dispatcher, Address destinationQueue, Address localAddress)
+        public ServiceControlBackend(string destinationQueue, string localAddress)
         {
-            this.dispatcher = dispatcher;
             this.destinationQueue = destinationQueue;
             this.localAddress = localAddress;
         }
 
-        public void Send(object messageToSend, TimeSpan timeToBeReceived)
+        public Task Send(object messageToSend, TimeSpan timeToBeReceived)
         {
-            var message = new TransportMessage
-            {
-                TimeToBeReceived = timeToBeReceived,
-                Body = Serialize(messageToSend)
-            };
-
-            message.Headers[Headers.EnclosedMessageTypes] = messageToSend.GetType().FullName;
-            message.Headers[Headers.ContentType] = ContentTypes.Json;
-
-            var sendOptions = new SendOptions(destinationQueue) { ReplyToAddress = localAddress };
-            dispatcher.Send(message, sendOptions);
+            var body = Serialize(messageToSend);
+            return Send(body, messageToSend.GetType().FullName, timeToBeReceived);
         }
 
         internal static byte[] Serialize(object messageToSend)
@@ -35,9 +30,37 @@
             return Encoding.UTF8.GetBytes(SimpleJson.SerializeObject(messageToSend, serializerStrategy));
         }
 
+        public void Start(IDispatchMessages dispatcher)
+        {
+            messageSender = dispatcher;
+        }
+
+        Task Send(byte[] body, string messageType, TimeSpan timeToBeReceived)
+        {
+            var headers = new Dictionary<string, string>
+            {
+                [Headers.EnclosedMessageTypes] = messageType,
+                [Headers.ContentType] = ContentTypes.Json,
+                [Headers.MessageIntent] = sendIntent
+            };
+            if (localAddress != null)
+            {
+                headers[Headers.ReplyToAddress] = localAddress;
+            }
+
+            var outgoingMessage = new OutgoingMessage(Guid.NewGuid().ToString(), headers, body);
+            var operation = new TransportOperation(outgoingMessage, new UnicastAddressTag(destinationQueue), deliveryConstraints: new List<DeliveryConstraint>
+            {
+                new DiscardIfNotReceivedBefore(timeToBeReceived)
+            });
+            return messageSender?.Dispatch(new TransportOperations(operation), new TransportTransaction(), new ContextBag());
+        }
+
+        static string sendIntent = MessageIntentEnum.Send.ToString();
+        string destinationQueue;
+        string localAddress;
+
         static IJsonSerializerStrategy serializerStrategy = new MessageSerializationStrategy();
-        ISendMessages dispatcher;
-        Address destinationQueue;
-        Address localAddress;
+        IDispatchMessages messageSender;
     }
 }

@@ -4,47 +4,40 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using Config;
-    using NServiceBus;
-    using Transports;
-    using Unicast;
+    using Features;
+    using Hosting;
     using ServiceControl.Plugin.CustomChecks.Messages;
+    using Transport;
 
-    class CustomChecksStartup : IWantToRunWhenConfigurationIsComplete, IDisposable
+    class CustomChecksStartup : FeatureStartupTask
     {
-        public CustomChecksStartup(ISendMessages dispatcher, Configure configure, UnicastBus unicastBus)
+        public CustomChecksStartup(IEnumerable<ICustomCheck> customChecks, IDispatchMessages dispatcher, ServiceControlBackend backend, HostInformation hostInfo, string endpointName, TimeSpan? ttl)
         {
-            var settings = configure.Settings;
-            if (!settings.TryGet("NServiceBus.CustomChecks.Queue", out string destinationQueue))
-            {
-                return; //HB not configured
-            }
-            settings.TryGet("NServiceBus.CustomChecks.Ttl", out ttl);
-
-            var replyToAddress = !settings.GetOrDefault<bool>("Endpoint.SendOnly")
-                ? settings.LocalAddress()
-                : null;
-
-            endpointName = settings.EndpointName();
-            backend = new ServiceControlBackend(dispatcher, Address.Parse(destinationQueue), replyToAddress);
-            this.unicastBus = unicastBus;
+            this.backend = backend;
+            this.hostInfo = hostInfo;
+            this.endpointName = endpointName;
+            this.ttl = ttl;
+            this.dispatcher = dispatcher;
+            this.customChecks = customChecks.ToList();
         }
 
-        public void Run(Configure config)
+        protected override Task OnStart(IMessageSession session)
         {
-            if (backend == null)
+            if (!customChecks.Any())
             {
-                return;
+                return Task.FromResult(0);
             }
 
-            var periodicChecks = unicastBus.Builder.BuildAll<ICustomCheck>().ToList();
-            foreach (var check in periodicChecks)
+            timerPeriodicChecks = new List<TimerBasedPeriodicCheck>(customChecks.Count);
+            backend.Start(dispatcher);
+
+            foreach (var check in customChecks)
             {
                 var checkTtl = check.Interval.HasValue
                     ? ttl ?? TimeSpan.FromTicks(check.Interval.Value.Ticks * 4)
                     : TimeSpan.MaxValue;
 
-                var checkRunner = new TimerBasedPeriodicCheck(check, backend, (id, category, result) => new ReportCustomCheckResult
+                var timerBasedPeriodicCheck = new TimerBasedPeriodicCheck(check, backend, (id, category, result) => new ReportCustomCheckResult
                 {
                     CustomCheckId = id,
                     Category = category,
@@ -52,30 +45,32 @@
                     FailureReason = result.FailureReason,
                     ReportedAt = DateTime.UtcNow,
                     EndpointName = endpointName,
-                    Host = unicastBus.HostInformation.DisplayName,
-                    HostId = unicastBus.HostInformation.HostId
+                    Host = hostInfo.DisplayName,
+                    HostId = hostInfo.HostId
                 }, checkTtl);
-                timerPeriodicChecks.Add(checkRunner);
+                timerBasedPeriodicCheck.Start();
+
+                timerPeriodicChecks.Add(timerBasedPeriodicCheck);
             }
+            return Task.FromResult(0);
         }
 
-        public void Stop()
+        protected override async Task OnStop(IMessageSession session)
         {
-            Parallel.ForEach(timerPeriodicChecks, t => t.Dispose());
+            if (!customChecks.Any())
+            {
+                return;
+            }
+
+            await Task.WhenAll(timerPeriodicChecks.Select(t => t.Stop()).ToArray()).ConfigureAwait(false);
         }
 
-        List<TimerBasedPeriodicCheck> timerPeriodicChecks = new List<TimerBasedPeriodicCheck>();
-        UnicastBus unicastBus;
+        List<ICustomCheck> customChecks;
+        IDispatchMessages dispatcher;
+        List<TimerBasedPeriodicCheck> timerPeriodicChecks;
         ServiceControlBackend backend;
+        HostInformation hostInfo;
         string endpointName;
         TimeSpan? ttl;
-
-        public void Dispose()
-        {
-            foreach (var periodicCheck in timerPeriodicChecks)
-            {
-                periodicCheck.Dispose();
-            }
-        }
     }
 }
