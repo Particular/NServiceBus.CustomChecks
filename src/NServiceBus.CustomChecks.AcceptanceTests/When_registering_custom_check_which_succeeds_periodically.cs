@@ -2,6 +2,7 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
 {
     using System;
     using System.Threading;
+    using System.Threading.Tasks;
     using AcceptanceTesting;
     using CustomChecks;
     using NServiceBus;
@@ -13,9 +14,9 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
     public class When_registering_custom_check_which_succeeds_periodically : NServiceBusAcceptanceTest
     {
         [Test]
-        public void Should_send_result_to_service_control()
+        public async Task Should_send_result_to_service_control()
         {
-            var context = Scenario.Define<Context>()
+            var context = await Scenario.Define<Context>()
                 .WithEndpoint<FakeServiceControl>()
                 .WithEndpoint<Sender>()
                 .Done(c => c.Times >= 2)
@@ -63,7 +64,7 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
                 {
                 }
 
-                public override CheckResult PerformCheck()
+                public override Task<CheckResult> PerformCheck()
                 {
                     return CheckResult.Pass;
                 }
@@ -82,13 +83,14 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
             {
                 public Context TestContext { get; set; }
 
-                public void Handle(ReportCustomCheckResult message)
+                public Task Handle(ReportCustomCheckResult message, IMessageHandlerContext context)
                 {
                     TestContext.FailureReason = message.FailureReason;
                     TestContext.CustomCheckId = message.CustomCheckId;
                     TestContext.Category = message.Category;
                     TestContext.ReportedAt = message.ReportedAt;
                     TestContext.Called();
+                    return Task.FromResult(0);
                 }
             }
         }

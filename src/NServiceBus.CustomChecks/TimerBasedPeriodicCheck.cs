@@ -1,40 +1,39 @@
 namespace NServiceBus.CustomChecks
 {
     using System;
-    using System.Threading;
+    using System.Threading.Tasks;
     using Logging;
     using ServiceControl.Plugin.CustomChecks.Messages;
 
-    class TimerBasedPeriodicCheck : IDisposable
+    class TimerBasedPeriodicCheck
     {
-        public TimerBasedPeriodicCheck(ICustomCheck customCheck, ServiceControlBackend serviceControlBackend, 
-            Func<string, string, CheckResult, ReportCustomCheckResult> messageFactory,
-            TimeSpan ttl)
+        static ILog Logger = LogManager.GetLogger(typeof(TimerBasedPeriodicCheck));
+
+        public TimerBasedPeriodicCheck(ICustomCheck customCheck, ServiceControlBackend serviceControlBackend, Func<string, string, CheckResult, ReportCustomCheckResult> messageFactory, TimeSpan ttl)
         {
             this.customCheck = customCheck;
             this.serviceControlBackend = serviceControlBackend;
             this.messageFactory = messageFactory;
             this.ttl = ttl;
-
-            timer = new Timer(Run, null, TimeSpan.Zero, customCheck.Interval ?? TimeSpan.FromMilliseconds(-1));
         }
 
-        public void Dispose()
+        public void Start()
         {
-            using (var waitHandle = new ManualResetEvent(false))
-            {
-                timer.Dispose(waitHandle);
-
-                waitHandle.WaitOne();
-            }
+            timer = new AsyncTimer();
+            timer.Start(Run, customCheck.Interval, e => { /* should not happen */});
         }
 
-        void Run(object state)
+        public Task Stop()
+        {
+            return timer.Stop();
+        }
+
+        async Task Run()
         {
             CheckResult result;
             try
             {
-                result = customCheck.PerformCheck();
+                result = await customCheck.PerformCheck().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -46,7 +45,7 @@ namespace NServiceBus.CustomChecks
             try
             {
                 var checkResult = messageFactory(customCheck.Id, customCheck.Category, result);
-                serviceControlBackend.Send(checkResult, ttl);
+                await serviceControlBackend.Send(checkResult, ttl).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -54,11 +53,10 @@ namespace NServiceBus.CustomChecks
             }
         }
 
-        static ILog Logger = LogManager.GetLogger(typeof(TimerBasedPeriodicCheck));
         ICustomCheck customCheck;
         ServiceControlBackend serviceControlBackend;
         Func<string, string, CheckResult, ReportCustomCheckResult> messageFactory;
         TimeSpan ttl;
-        Timer timer;
+        AsyncTimer timer;
     }
 }
