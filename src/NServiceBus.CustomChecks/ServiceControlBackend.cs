@@ -29,6 +29,7 @@
             var sendOptions = new SendOptions(destinationQueue) { ReplyToAddress = localAddress };
             dispatcher.Send(message, sendOptions);
         }
+
         internal static byte[] Serialize(object messageToSend)
         {
             return Encoding.UTF8.GetBytes(SimpleJson.SerializeObject(messageToSend, serializerStrategy));
