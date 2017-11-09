@@ -1,7 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\Particular.Packaging.props" />
-
   <PropertyGroup>
     <TargetFramework>net45</TargetFramework>
     <SignAssembly>true</SignAssembly>
@@ -11,15 +9,16 @@
 
   <PropertyGroup>
     <Description>Enables sending state of custom checks to ServicePulse</Description>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NServiceBus" Version="[5.0.0, 6)" />
     <PackageReference Include="Particular.CodeRules" Version="*" PrivateAssets="All" />
-    <PackageReference Include="GitVersionTask" Version="4.0.0-beta0012" PrivateAssets="All" />
   </ItemGroup>
 
-  <Import Project="..\Particular.Packaging.targets" />
+  <ItemGroup>
+    <PackageReference Include="Particular.Packaging" Version="0.1.0" PrivateAssets="All" />
+    <PackageReference Include="GitVersionTask" Version="4.0.0-beta0012" PrivateAssets="All" />
+  </ItemGroup>
 
 </Project>
