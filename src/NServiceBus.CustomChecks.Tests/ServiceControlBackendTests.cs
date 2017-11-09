@@ -5,7 +5,6 @@
     using System.Text;
     using CustomChecks;
     using NUnit.Framework;
-    using SagaAudit.Tests;
     using ServiceControl.Plugin.CustomChecks.Messages;
 
     [TestFixture]

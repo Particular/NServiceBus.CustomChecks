@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using NServiceBus.SagaAudit.Tests;
+using NServiceBus.CustomChecks.Tests;
 using NUnit.Framework;
 using PublicApiGenerator;
 
