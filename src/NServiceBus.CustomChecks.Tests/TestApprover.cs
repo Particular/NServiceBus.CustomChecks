@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.SagaAudit.Tests
+﻿namespace NServiceBus.CustomChecks.Tests
 {
     using System.IO;
     using ApprovalTests;
