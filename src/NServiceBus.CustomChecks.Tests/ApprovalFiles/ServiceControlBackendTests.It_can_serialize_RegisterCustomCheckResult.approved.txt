@@ -1,0 +1,1 @@
+﻿{"HostId":"00000000-0000-0000-0000-000000000000","CustomCheckId":"MyCheckId","Category":"MyCategory","HasFailed":true,"FailureReason":"Failure reason.","ReportedAt":"2016-02-01T13:59:00Z","EndpointName":"My.Endpoint","Host":"Host"}
