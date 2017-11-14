@@ -15,7 +15,7 @@
         /// <param name="config"></param>
         /// <param name="serviceControlQueue">ServiceControl queue address.</param>
         /// <param name="timeToLive">The maximum time to live for the custom check report messages. Defaults to 4 times the check interval.</param>
-        public static void ReportCustomChecksTo(this BusConfiguration config, string serviceControlQueue, TimeSpan? timeToLive = null)
+        public static void ReportCustomChecksTo(this EndpointConfiguration config, string serviceControlQueue, TimeSpan? timeToLive = null)
         {
             if (serviceControlQueue == null)
             {

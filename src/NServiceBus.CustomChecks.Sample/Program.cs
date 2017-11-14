@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using NServiceBus;
 using NServiceBus.CustomChecks;
 
@@ -8,17 +9,23 @@ class Program
     {
 	    Console.Title = "NServiceBus.CustomChecks.Sample";
 
-        var busConfiguration = new BusConfiguration();
-        busConfiguration.EndpointName("NServiceBus.CustomChecks.Sample");
+        AsyncMain().GetAwaiter().GetResult();
+    }
 
-        busConfiguration.UsePersistence<InMemoryPersistence>();
-        busConfiguration.ReportCustomChecksTo("Particular.ServiceControl");
+    static async Task AsyncMain()
+    {
+        var endpointConfiguration = new EndpointConfiguration("NServiceBus.CustomChecks.Sample");
 
-        using (Bus.CreateSendOnly(busConfiguration))
-        {
-            Console.WriteLine("Press any key to exit");
-            Console.ReadKey();
-        }
+        endpointConfiguration.UsePersistence<InMemoryPersistence>();
+        endpointConfiguration.ReportCustomChecksTo("Particular.ServiceControl");
+        endpointConfiguration.SendFailedMessagesTo("error");
+
+        var endpointInstance = await Endpoint.Start(endpointConfiguration).ConfigureAwait(false);
+
+        Console.WriteLine("Press any key to exit");
+        Console.ReadKey();
+
+        await endpointInstance.Stop().ConfigureAwait(false);
     }
 
     class MyCheck : ICustomCheck
@@ -28,11 +35,11 @@ class Program
         public string Category => "MyCategory";
         public string Id => "MyId";
         public TimeSpan? Interval => TimeSpan.FromSeconds(5);
-        public CheckResult PerformCheck()
+        Task<CheckResult> ICustomCheck.PerformCheck()
         {
             return r.Next(2) == 0
-                ? CheckResult.Pass
-                : CheckResult.Failed("reasons");
+                ? Task.FromResult(CheckResult.Pass)
+                : Task.FromResult(CheckResult.Failed("reasons"));
         }
     }
 }

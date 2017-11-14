@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.CustomChecks
 {
     using System;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// Interface to implement a custom check.
@@ -26,6 +27,6 @@
         /// Perfoms the check.
         /// </summary>
         /// <returns>The result of the check.</returns>
-        CheckResult PerformCheck();
+        Task<CheckResult> PerformCheck();
     }
 }
