@@ -16,6 +16,8 @@ class Program
     {
         var endpointConfiguration = new EndpointConfiguration("NServiceBus.CustomChecks.Sample");
 
+        endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
+        endpointConfiguration.UseTransport<MsmqTransport>();
         endpointConfiguration.UsePersistence<InMemoryPersistence>();
         endpointConfiguration.ReportCustomChecksTo("Particular.ServiceControl");
         endpointConfiguration.SendFailedMessagesTo("error");
