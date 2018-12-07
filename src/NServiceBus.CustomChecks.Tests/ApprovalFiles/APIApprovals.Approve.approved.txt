@@ -9,6 +9,7 @@ namespace NServiceBus.CustomChecks
         public string FailureReason { get; set; }
         public bool HasFailed { get; set; }
         public static NServiceBus.CustomChecks.CheckResult Failed(string reason) { }
+        public static System.Threading.Tasks.Task<NServiceBus.CustomChecks.CheckResult> op_Implicit(NServiceBus.CustomChecks.CheckResult result) { }
     }
     public abstract class CustomCheck : NServiceBus.CustomChecks.ICustomCheck
     {
