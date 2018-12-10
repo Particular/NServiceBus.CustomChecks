@@ -1,17 +1,16 @@
 ﻿namespace NServiceBus.CustomChecks.Tests
 {
     using System;
-    using System.Runtime.CompilerServices;
     using System.Text;
     using CustomChecks;
     using NUnit.Framework;
+    using Particular.Approvals;
     using ServiceControl.Plugin.CustomChecks.Messages;
 
     [TestFixture]
     public class ServiceControlBackendTests
     {
         [Test]
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public void It_can_serialize_RegisterCustomCheckResult()
         {
             var body = ServiceControlBackend.Serialize(new ReportCustomCheckResult
@@ -25,7 +24,7 @@
                 FailureReason = "Failure reason.",
                 HasFailed = true
             });
-            TestApprover.Verify(Encoding.UTF8.GetString(body));
+            Approver.Verify(Encoding.UTF8.GetString(body));
         }
     }
 }
