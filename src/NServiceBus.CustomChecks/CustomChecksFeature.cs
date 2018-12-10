@@ -17,12 +17,11 @@
                 .ToList()
                 .ForEach(t => context.Container.ConfigureComponent(t, DependencyLifecycle.InstancePerCall));
 
-            var replyToAddress = !context.Settings.GetOrDefault<bool>("Endpoint.SendOnly") 
-                ? context.Settings.LocalAddress() 
+            var replyToAddress = !context.Settings.GetOrDefault<bool>("Endpoint.SendOnly")
+                ? context.Settings.LocalAddress()
                 : null;
 
-            TimeSpan? ttl;
-            context.Settings.TryGet("NServiceBus.CustomChecks.Ttl", out ttl);
+            context.Settings.TryGet("NServiceBus.CustomChecks.Ttl", out TimeSpan? ttl);
 
             var serviceControlQueue = context.Settings.Get<string>("NServiceBus.CustomChecks.Queue");
             var backend = new ServiceControlBackend(serviceControlQueue, replyToAddress);

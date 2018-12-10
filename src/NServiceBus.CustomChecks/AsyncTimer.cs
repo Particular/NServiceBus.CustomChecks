@@ -17,6 +17,8 @@ namespace NServiceBus.CustomChecks
                 {
                     try
                     {
+                        await callback().ConfigureAwait(false);
+
                         if (interval.HasValue)
                         {
                             await Task.Delay(interval.Value, token).ConfigureAwait(false);
@@ -25,8 +27,6 @@ namespace NServiceBus.CustomChecks
                         {
                             tokenSource.Cancel();
                         }
-
-                        await callback().ConfigureAwait(false);
                     }
                     catch (OperationCanceledException)
                     {
