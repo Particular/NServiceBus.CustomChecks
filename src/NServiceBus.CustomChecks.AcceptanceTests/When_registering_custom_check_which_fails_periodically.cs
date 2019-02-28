@@ -30,7 +30,7 @@
 
         class Context : ScenarioContext
         {
-            private long times;
+            long times;
 
             public long Times => Interlocked.Read(ref times);
 

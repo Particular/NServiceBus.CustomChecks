@@ -1,17 +1,15 @@
-﻿using System.Runtime.CompilerServices;
-using NServiceBus.CustomChecks;
-using NServiceBus.CustomChecks.Tests;
+﻿using NServiceBus.CustomChecks;
 using NUnit.Framework;
+using Particular.Approvals;
 using PublicApiGenerator;
 
 [TestFixture]
 public class APIApprovals
 {
     [Test]
-    [MethodImpl(MethodImplOptions.NoInlining)]
     public void Approve()
     {
-        var publicApi = ApiGenerator.GeneratePublicApi(typeof(CustomCheck).Assembly, excludeAttributes: new[] { "System.Runtime.Versioning.TargetFrameworkAttribute" });
-        TestApprover.Verify(publicApi);
+        var publicApi = ApiGenerator.GeneratePublicApi(typeof(CustomCheck).Assembly, excludeAttributes: new[] {"System.Runtime.Versioning.TargetFrameworkAttribute"});
+        Approver.Verify(publicApi);
     }
 }
