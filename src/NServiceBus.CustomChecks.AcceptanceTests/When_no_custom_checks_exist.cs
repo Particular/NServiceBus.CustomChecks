@@ -34,10 +34,15 @@
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
             {
-                public Context TestContext { get; set; }
+                Context testContext;
+
+                public MyMessageHandler(Context testContext)
+                {
+                    this.testContext = testContext;
+                }
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
-                    TestContext.HandlerCalled = true;
+                    testContext.HandlerCalled = true;
                     return Task.FromResult(0);
                 }
             }
