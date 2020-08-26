@@ -4,6 +4,7 @@
     using System.Linq;
     using Features;
     using Hosting;
+    using Microsoft.Extensions.DependencyInjection;
     using NServiceBus;
     using Transport;
 
@@ -26,7 +27,7 @@
             var serviceControlQueue = context.Settings.Get<string>("NServiceBus.CustomChecks.Queue");
             var backend = new ServiceControlBackend(serviceControlQueue, replyToAddress);
 
-            context.RegisterStartupTask(b => new CustomChecksStartup(b.BuildAll<ICustomCheck>(), b.Build<IDispatchMessages>(), backend, b.Build<HostInformation>(), context.Settings.EndpointName(), ttl));
+            context.RegisterStartupTask(b => new CustomChecksStartup(b.GetServices<ICustomCheck>(), b.GetRequiredService<IDispatchMessages>(), backend, b.GetRequiredService<HostInformation>(), context.Settings.EndpointName(), ttl));
         }
     }
 }

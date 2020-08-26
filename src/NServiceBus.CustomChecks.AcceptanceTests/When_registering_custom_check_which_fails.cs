@@ -72,15 +72,20 @@
 
             public class MyMessageHandler : IHandleMessages<ReportCustomCheckResult>
             {
-                public Context TestContext { get; set; }
+                Context testContext;
+
+                public MyMessageHandler(Context testContext)
+                {
+                    this.testContext = testContext;
+                }
 
                 public Task Handle(ReportCustomCheckResult message, IMessageHandlerContext context)
                 {
-                    TestContext.FailureReason = message.FailureReason;
-                    TestContext.CustomCheckId = message.CustomCheckId;
-                    TestContext.Category = message.Category;
-                    TestContext.ReportedAt = message.ReportedAt;
-                    TestContext.WasCalled = true;
+                    testContext.FailureReason = message.FailureReason;
+                    testContext.CustomCheckId = message.CustomCheckId;
+                    testContext.Category = message.Category;
+                    testContext.ReportedAt = message.ReportedAt;
+                    testContext.WasCalled = true;
                     return Task.FromResult(0);
                 }
             }
