@@ -16,7 +16,7 @@
             context.Settings.GetAvailableTypes()
                 .Where(t => typeof(ICustomCheck).IsAssignableFrom(t) && !(t.IsAbstract || t.IsInterface))
                 .ToList()
-                .ForEach(t => context.Container.ConfigureComponent(t, DependencyLifecycle.InstancePerCall));
+                .ForEach(t => context.Services.AddTransient(typeof(ICustomCheck), t));
 
             var replyToAddress = !context.Settings.GetOrDefault<bool>("Endpoint.SendOnly")
                 ? context.Settings.LocalAddress()
