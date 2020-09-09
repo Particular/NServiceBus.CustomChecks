@@ -4,7 +4,6 @@
     using AcceptanceTesting.Support;
     using Configuration.AdvancedExtensibility;
     using Microsoft.Extensions.DependencyInjection;
-    using ObjectBuilder;
     using Transport;
 
     public static class ConfigureExtensions
