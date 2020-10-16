@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NServiceBus" Version="8.0.0-alpha.627" />
+    <PackageReference Include="NServiceBus" Version="8.0.0-alpha.630" />
     <PackageReference Include="NServiceBus.Persistence.NonDurable" Version="0.2.0-alpha.23" />
     <PackageReference Include="NServiceBus.Transport.Msmq" Version="1.1.0" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.2.0" />
