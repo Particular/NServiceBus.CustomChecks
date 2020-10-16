@@ -18,7 +18,7 @@ class Program
 
         endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
         endpointConfiguration.UseTransport<MsmqTransport>();
-        endpointConfiguration.UsePersistence<InMemoryPersistence>();
+        endpointConfiguration.UsePersistence<NonDurablePersistence>();
         endpointConfiguration.ReportCustomChecksTo("Particular.ServiceControl");
         endpointConfiguration.SendFailedMessagesTo("error");
         endpointConfiguration.EnableInstallers();
