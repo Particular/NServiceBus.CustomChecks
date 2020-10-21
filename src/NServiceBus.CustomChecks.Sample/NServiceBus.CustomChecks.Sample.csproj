@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
@@ -14,9 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NServiceBus" Version="8.0.0-alpha.630" />
-    <PackageReference Include="NServiceBus.Persistence.NonDurable" Version="0.2.0-alpha.23" />
-    <PackageReference Include="NServiceBus.Transport.Msmq" Version="1.1.0" />
+    <PackageReference Include="NServiceBus" Version="8.0.0-alpha.631" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.2.0" />
     <PackageReference Include="Particular.CodeRules" Version="0.7.0" />
   </ItemGroup>
