@@ -17,11 +17,8 @@ class Program
         var endpointConfiguration = new EndpointConfiguration("NServiceBus.CustomChecks.Sample");
 
         endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
-        endpointConfiguration.UseTransport<MsmqTransport>();
-        endpointConfiguration.UsePersistence<InMemoryPersistence>();
+        endpointConfiguration.UseTransport<LearningTransport>();
         endpointConfiguration.ReportCustomChecksTo("Particular.ServiceControl");
-        endpointConfiguration.SendFailedMessagesTo("error");
-        endpointConfiguration.EnableInstallers();
 
         var endpointInstance = await Endpoint.Start(endpointConfiguration).ConfigureAwait(false);
 
