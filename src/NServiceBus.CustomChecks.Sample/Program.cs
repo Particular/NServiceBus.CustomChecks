@@ -7,7 +7,7 @@ class Program
 {
     static void Main()
     {
-	    Console.Title = "NServiceBus.CustomChecks.Sample";
+        Console.Title = "NServiceBus.CustomChecks.Sample";
 
         AsyncMain().GetAwaiter().GetResult();
     }
