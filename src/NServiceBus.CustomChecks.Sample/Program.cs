@@ -17,7 +17,7 @@ class Program
         var endpointConfiguration = new EndpointConfiguration("NServiceBus.CustomChecks.Sample");
 
         endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
-        endpointConfiguration.UseTransport<LearningTransport>();
+        endpointConfiguration.UseTransport(new LearningTransport());
         endpointConfiguration.ReportCustomChecksTo("Particular.ServiceControl");
 
         var endpointInstance = await Endpoint.Start(endpointConfiguration).ConfigureAwait(false);
