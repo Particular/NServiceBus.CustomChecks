@@ -27,7 +27,7 @@
             var serviceControlQueue = context.Settings.Get<string>("NServiceBus.CustomChecks.Queue");
             var backend = new ServiceControlBackend(serviceControlQueue, replyToAddress);
 
-            context.RegisterStartupTask(b => new CustomChecksStartup(b.GetServices<ICustomCheck>(), b.GetRequiredService<IDispatchMessages>(), backend, b.GetRequiredService<HostInformation>(), context.Settings.EndpointName(), ttl));
+            context.RegisterStartupTask(b => new CustomChecksStartup(b.GetServices<ICustomCheck>(), b.GetRequiredService<IMessageDispatcher>(), backend, b.GetRequiredService<HostInformation>(), context.Settings.EndpointName(), ttl));
         }
     }
 }

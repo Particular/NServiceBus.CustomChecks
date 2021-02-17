@@ -4,8 +4,6 @@
     using System.Collections.Generic;
     using System.Text;
     using System.Threading.Tasks;
-    using DeliveryConstraints;
-    using Extensibility;
     using Performance.TimeToBeReceived;
     using Routing;
     using SimpleJson;
@@ -30,7 +28,7 @@
             return Encoding.UTF8.GetBytes(SimpleJson.SerializeObject(messageToSend, serializerStrategy));
         }
 
-        public void Start(IDispatchMessages dispatcher)
+        public void Start(IMessageDispatcher dispatcher)
         {
             messageSender = dispatcher;
         }
@@ -49,11 +47,12 @@
             }
 
             var outgoingMessage = new OutgoingMessage(Guid.NewGuid().ToString(), headers, body);
-            var operation = new TransportOperation(outgoingMessage, new UnicastAddressTag(destinationQueue), deliveryConstraints: new List<DeliveryConstraint>
+            var dispatchProperties = new DispatchProperties
             {
-                new DiscardIfNotReceivedBefore(timeToBeReceived)
-            });
-            return messageSender?.Dispatch(new TransportOperations(operation), new TransportTransaction(), new ContextBag());
+                DiscardIfNotReceivedBefore = new DiscardIfNotReceivedBefore(timeToBeReceived)
+            };
+            var operation = new TransportOperation(outgoingMessage, new UnicastAddressTag(destinationQueue), dispatchProperties);
+            return messageSender?.Dispatch(new TransportOperations(operation), new TransportTransaction());
         }
 
         static string sendIntent = MessageIntentEnum.Send.ToString();
@@ -61,6 +60,6 @@
         string localAddress;
 
         static IJsonSerializerStrategy serializerStrategy = new MessageSerializationStrategy();
-        IDispatchMessages messageSender;
+        IMessageDispatcher messageSender;
     }
 }
