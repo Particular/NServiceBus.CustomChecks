@@ -10,7 +10,6 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
-    using Performance.TimeToBeReceived;
     using Transport;
 
     public class When_using_one_time_check : NServiceBusAcceptanceTest
@@ -25,7 +24,7 @@
 
             var message = context.Queue.Dequeue();
 
-            var constraint = message.UnicastTransportOperations.First().DeliveryConstraints.OfType<DiscardIfNotReceivedBefore>().First();
+            var constraint = message.UnicastTransportOperations.First().Properties.DiscardIfNotReceivedBefore;
             Assert.AreEqual(TimeSpan.MaxValue, constraint.MaxTime);
         }
 
@@ -41,7 +40,7 @@
                 EndpointSetup<DefaultServer>(c =>
                 {
                     c.ReportCustomChecksTo("ServiceControl", TimeSpan.FromSeconds(6));
-                    c.UseTransport<InMemoryTransport>();
+                    c.UseTransport(new InMemoryTransport());
                     c.SendOnly();
                 });
             }

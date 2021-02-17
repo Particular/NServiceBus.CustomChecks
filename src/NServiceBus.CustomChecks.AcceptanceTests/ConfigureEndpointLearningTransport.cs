@@ -38,8 +38,8 @@ public class ConfigureEndpointLearningTransport
         //we want the tests to be exposed to concurrency
         configuration.LimitMessageProcessingConcurrencyTo(PushRuntimeSettings.Default.MaxConcurrency);
 
-        configuration.UseTransport<LearningTransport>()
-            .StorageDirectory(storageDir);
+        var transport = new LearningTransport { StorageDirectory = storageDir };
+        configuration.UseTransport(transport);
 
         return Task.FromResult(0);
     }
