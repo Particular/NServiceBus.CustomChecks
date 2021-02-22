@@ -1,84 +1,54 @@
 namespace NServiceBus.CustomChecks.AcceptanceTests
 {
-    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using DelayedDelivery;
-    using Extensibility;
-    using Performance.TimeToBeReceived;
-    using Routing;
     using Settings;
     using Transport;
 
     class InMemoryTransport : TransportDefinition
     {
-        public override TransportInfrastructure Initialize(SettingsHolder settings, string connectionString)
+        public InMemoryTransport() : base(TransportTransactionMode.None, true, true, true)
         {
-            return new InMemTransportInfrastructure(settings);
         }
 
-        public override string ExampleConnectionStringForErrorMessage => null;
-        public override bool RequiresConnectionString => false;
+        public override Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses)
+        {
+            return Task.FromResult<TransportInfrastructure>(
+                new InMemTransportInfrastructure(hostSettings.CoreSettings));
+        }
+
+        public override string ToTransportAddress(QueueAddress address) => address.BaseAddress;
+
+        public override IReadOnlyCollection<TransportTransactionMode> GetSupportedTransactionModes() =>
+            new[] { TransportTransactionMode.None };
 
         class InMemTransportInfrastructure : TransportInfrastructure
         {
             Queue<TransportOperations> queue;
 
-            public InMemTransportInfrastructure(SettingsHolder settings)
+            public InMemTransportInfrastructure(ReadOnlySettings settings)
             {
                 queue = settings.Get<Queue<TransportOperations>>("InMemQueue");
+                Dispatcher = new MessageDispatcher(queue);
             }
 
-            public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
-            {
-                throw new NotImplementedException("Only sending is supported");
-            }
-
-            public override TransportSendInfrastructure ConfigureSendInfrastructure()
-            {
-                return new TransportSendInfrastructure(() => new Dispatcher(queue), () => Task.FromResult(StartupCheckResult.Success));
-            }
-
-            public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
-            {
-                throw new NotImplementedException();
-            }
-
-            public override EndpointInstance BindToLocalEndpoint(EndpointInstance instance)
-            {
-                return instance;
-            }
-
-            public override string ToTransportAddress(LogicalAddress logicalAddress)
-            {
-                return logicalAddress.EndpointInstance.Endpoint;
-            }
-
-            public override IEnumerable<Type> DeliveryConstraints => new[]
-            {
-                typeof(DoNotDeliverBefore),
-                typeof(DelayDeliveryWith),
-                typeof(DiscardIfNotReceivedBefore)
-            };
-
-            public override TransportTransactionMode TransactionMode => TransportTransactionMode.None;
-            public override OutboundRoutingPolicy OutboundRoutingPolicy => new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
-
-            class Dispatcher : IDispatchMessages
+            class MessageDispatcher : IMessageDispatcher
             {
                 Queue<TransportOperations> queue;
 
-                public Dispatcher(Queue<TransportOperations> queue)
+                public MessageDispatcher(Queue<TransportOperations> queue)
                 {
                     this.queue = queue;
                 }
 
-                public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
+                public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction)
                 {
                     queue.Enqueue(outgoingMessages);
                     return Task.FromResult(0);
                 }
             }
+
+            public override Task Shutdown() => Task.FromResult(0);
         }
     }
 }

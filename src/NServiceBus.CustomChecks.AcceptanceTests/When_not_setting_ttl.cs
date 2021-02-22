@@ -10,7 +10,6 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
-    using Performance.TimeToBeReceived;
     using Transport;
 
     public class When_not_setting_ttl : NServiceBusAcceptanceTest
@@ -25,7 +24,7 @@
 
             var message = context.Queue.Dequeue();
 
-            var constraint = message.UnicastTransportOperations.First().DeliveryConstraints.OfType<DiscardIfNotReceivedBefore>().First();
+            var constraint = message.UnicastTransportOperations.First().Properties.DiscardIfNotReceivedBefore;
             Assert.AreEqual(TimeSpan.FromSeconds(4), constraint.MaxTime);
         }
 
@@ -41,7 +40,7 @@
                 EndpointSetup<DefaultServer>(c =>
                 {
                     c.ReportCustomChecksTo("ServiceControl");
-                    c.UseTransport<InMemoryTransport>();
+                    c.UseTransport(new InMemoryTransport());
                     c.SendOnly();
                 });
             }

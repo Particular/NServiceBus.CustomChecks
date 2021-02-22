@@ -11,7 +11,7 @@
 
     class CustomChecksStartup : FeatureStartupTask
     {
-        public CustomChecksStartup(IEnumerable<ICustomCheck> customChecks, IDispatchMessages dispatcher, ServiceControlBackend backend, HostInformation hostInfo, string endpointName, TimeSpan? ttl)
+        public CustomChecksStartup(IEnumerable<ICustomCheck> customChecks, IMessageDispatcher dispatcher, ServiceControlBackend backend, HostInformation hostInfo, string endpointName, TimeSpan? ttl)
         {
             this.backend = backend;
             this.hostInfo = hostInfo;
@@ -66,7 +66,7 @@
         }
 
         List<ICustomCheck> customChecks;
-        IDispatchMessages dispatcher;
+        IMessageDispatcher dispatcher;
         List<TimerBasedPeriodicCheck> timerPeriodicChecks;
         ServiceControlBackend backend;
         HostInformation hostInfo;
