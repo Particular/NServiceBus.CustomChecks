@@ -1,6 +1,7 @@
 namespace NServiceBus.CustomChecks.AcceptanceTests
 {
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
     using Settings;
     using Transport;
@@ -11,7 +12,7 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
         {
         }
 
-        public override Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses)
+        public override Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses, CancellationToken cancellationToken)
         {
             return Task.FromResult<TransportInfrastructure>(
                 new InMemTransportInfrastructure(hostSettings.CoreSettings));
@@ -41,14 +42,14 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
                     this.queue = queue;
                 }
 
-                public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction)
+                public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, CancellationToken cancellationToken)
                 {
                     queue.Enqueue(outgoingMessages);
                     return Task.FromResult(0);
                 }
             }
 
-            public override Task Shutdown() => Task.FromResult(0);
+            public override Task Shutdown(CancellationToken cancellationToken) => Task.FromResult(0);
         }
     }
 }

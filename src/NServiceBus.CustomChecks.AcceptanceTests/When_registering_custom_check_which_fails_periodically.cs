@@ -64,7 +64,7 @@
                 {
                 }
 
-                public override Task<CheckResult> PerformCheck()
+                public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken)
                 {
                     return CheckResult.Failed("Some reason");
                 }
