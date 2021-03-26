@@ -18,7 +18,7 @@ namespace NServiceBus.CustomChecks
             this.ttl = ttl;
         }
 
-        public Task Start(CancellationToken cancellationToken)
+        public void Start()
         {
             stopPeriodicChecksTokenSource = new CancellationTokenSource();
 
@@ -39,14 +39,16 @@ namespace NServiceBus.CustomChecks
                         await Task.Delay(customCheck.Interval.Value, stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
                     }
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException) when (stopPeriodicChecksTokenSource.IsCancellationRequested)
                 {
                     //no-op
                     return;
                 }
-            }, cancellationToken);
-
-            return Task.CompletedTask;
+                catch (Exception ex)
+                {
+                    Logger.Error("Failed to run periodic custom checks", ex);
+                }
+            }, CancellationToken.None);
         }
 
         public Task Stop()

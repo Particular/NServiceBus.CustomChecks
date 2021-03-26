@@ -22,11 +22,11 @@
             this.customChecks = customChecks.ToList();
         }
 
-        protected override async Task OnStart(IMessageSession session, CancellationToken cancellationToken)
+        protected override Task OnStart(IMessageSession session, CancellationToken cancellationToken)
         {
             if (!customChecks.Any())
             {
-                return;
+                return Task.CompletedTask;
             }
 
             timerPeriodicChecks = new List<TimerBasedPeriodicCheck>(customChecks.Count);
@@ -50,10 +50,12 @@
                     HostId = hostInfo.HostId
                 }, checkTtl);
 
-                await timerBasedPeriodicCheck.Start(cancellationToken).ConfigureAwait(false);
+                timerBasedPeriodicCheck.Start();
 
                 timerPeriodicChecks.Add(timerBasedPeriodicCheck);
             }
+
+            return Task.CompletedTask;
         }
 
         protected override async Task OnStop(IMessageSession session, CancellationToken cancellationToken)
