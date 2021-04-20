@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Performance.TimeToBeReceived;
     using Routing;
@@ -17,10 +18,10 @@
             this.localAddress = localAddress;
         }
 
-        public Task Send(object messageToSend, TimeSpan timeToBeReceived)
+        public Task Send(object messageToSend, TimeSpan timeToBeReceived, CancellationToken cancellationToken = default)
         {
             var body = Serialize(messageToSend);
-            return Send(body, messageToSend.GetType().FullName, timeToBeReceived);
+            return Send(body, messageToSend.GetType().FullName, timeToBeReceived, cancellationToken);
         }
 
         internal static byte[] Serialize(object messageToSend)
@@ -33,7 +34,7 @@
             messageSender = dispatcher;
         }
 
-        Task Send(byte[] body, string messageType, TimeSpan timeToBeReceived)
+        Task Send(byte[] body, string messageType, TimeSpan timeToBeReceived, CancellationToken cancellationToken)
         {
             var headers = new Dictionary<string, string>
             {
@@ -52,7 +53,7 @@
                 DiscardIfNotReceivedBefore = new DiscardIfNotReceivedBefore(timeToBeReceived)
             };
             var operation = new TransportOperation(outgoingMessage, new UnicastAddressTag(destinationQueue), dispatchProperties);
-            return messageSender?.Dispatch(new TransportOperations(operation), new TransportTransaction());
+            return messageSender?.Dispatch(new TransportOperations(operation), new TransportTransaction(), cancellationToken);
         }
 
         static string sendIntent = MessageIntentEnum.Send.ToString();

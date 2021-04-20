@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.CustomChecks.AcceptanceTests
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using CustomChecks;
@@ -55,7 +56,7 @@
                 {
                 }
 
-                public override Task<CheckResult> PerformCheck()
+                public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default)
                 {
                     return CheckResult.Failed("Some reason");
                 }

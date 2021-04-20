@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.CustomChecks
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -24,9 +25,9 @@
         TimeSpan? Interval { get; }
 
         /// <summary>
-        /// Perfoms the check.
+        /// Performs the check.
         /// </summary>
         /// <returns>The result of the check.</returns>
-        Task<CheckResult> PerformCheck();
+        Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default);
     }
 }

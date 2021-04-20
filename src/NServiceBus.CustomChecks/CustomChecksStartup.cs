@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Features;
     using Hosting;
@@ -21,11 +22,11 @@
             this.customChecks = customChecks.ToList();
         }
 
-        protected override Task OnStart(IMessageSession session)
+        protected override Task OnStart(IMessageSession session, CancellationToken cancellationToken = default)
         {
             if (!customChecks.Any())
             {
-                return Task.FromResult(0);
+                return Task.CompletedTask;
             }
 
             timerPeriodicChecks = new List<TimerBasedPeriodicCheck>(customChecks.Count);
@@ -48,14 +49,16 @@
                     Host = hostInfo.DisplayName,
                     HostId = hostInfo.HostId
                 }, checkTtl);
+
                 timerBasedPeriodicCheck.Start();
 
                 timerPeriodicChecks.Add(timerBasedPeriodicCheck);
             }
-            return Task.FromResult(0);
+
+            return Task.CompletedTask;
         }
 
-        protected override async Task OnStop(IMessageSession session)
+        protected override async Task OnStop(IMessageSession session, CancellationToken cancellationToken = default)
         {
             if (!customChecks.Any())
             {

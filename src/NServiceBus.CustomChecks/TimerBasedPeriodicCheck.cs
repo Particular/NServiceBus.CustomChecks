@@ -1,6 +1,7 @@
 namespace NServiceBus.CustomChecks
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using Logging;
     using ServiceControl.Plugin.CustomChecks.Messages;
@@ -19,21 +20,55 @@ namespace NServiceBus.CustomChecks
 
         public void Start()
         {
-            timer = new AsyncTimer();
-            timer.Start(Run, customCheck.Interval, e => { /* should not happen */});
+            stopPeriodicChecksTokenSource = new CancellationTokenSource();
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    if (!customCheck.Interval.HasValue)
+                    {
+                        await Run(stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
+                        return;
+                    }
+
+                    while (!stopPeriodicChecksTokenSource.IsCancellationRequested)
+                    {
+                        await Run(stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
+
+                        await Task.Delay(customCheck.Interval.Value, stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
+                    }
+                }
+                catch (OperationCanceledException ex) when (ex.CancellationToken == stopPeriodicChecksTokenSource.Token)
+                {
+                    //no-op
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("Failed to run periodic custom checks", ex);
+                }
+            }, CancellationToken.None);
         }
 
-        public Task Stop()
+        public Task Stop(CancellationToken cancellationToken = default)
         {
-            return timer.Stop();
+            stopPeriodicChecksTokenSource?.Cancel();
+
+            return Task.CompletedTask;
         }
 
-        async Task Run()
+        async Task Run(CancellationToken cancellationToken)
         {
             CheckResult result;
             try
             {
-                result = await customCheck.PerformCheck().ConfigureAwait(false);
+                result = await customCheck.PerformCheck(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                //no-op
+                return;
             }
             catch (Exception ex)
             {
@@ -45,7 +80,7 @@ namespace NServiceBus.CustomChecks
             try
             {
                 var checkResult = messageFactory(customCheck.Id, customCheck.Category, result);
-                await serviceControlBackend.Send(checkResult, ttl).ConfigureAwait(false);
+                await serviceControlBackend.Send(checkResult, ttl, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -53,10 +88,10 @@ namespace NServiceBus.CustomChecks
             }
         }
 
+        CancellationTokenSource stopPeriodicChecksTokenSource;
         ICustomCheck customCheck;
         ServiceControlBackend serviceControlBackend;
         Func<string, string, CheckResult, ReportCustomCheckResult> messageFactory;
         TimeSpan ttl;
-        AsyncTimer timer;
     }
 }
