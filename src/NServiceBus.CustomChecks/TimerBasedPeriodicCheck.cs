@@ -39,7 +39,7 @@ namespace NServiceBus.CustomChecks
                         await Task.Delay(customCheck.Interval.Value, stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
                     }
                 }
-                catch (OperationCanceledException) when (stopPeriodicChecksTokenSource.IsCancellationRequested)
+                catch (OperationCanceledException ex) when (ex.CancellationToken == stopPeriodicChecksTokenSource.Token)
                 {
                     //no-op
                     return;
