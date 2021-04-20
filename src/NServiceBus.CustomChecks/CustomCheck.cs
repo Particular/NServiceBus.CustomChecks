@@ -41,6 +41,6 @@
         /// Performs the check.
         /// </summary>
         /// <returns>The result of the check.</returns>
-        public abstract Task<CheckResult> PerformCheck(CancellationToken cancellationToken);
+        public abstract Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default);
     }
 }

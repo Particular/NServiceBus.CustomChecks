@@ -18,7 +18,7 @@
             this.localAddress = localAddress;
         }
 
-        public Task Send(object messageToSend, TimeSpan timeToBeReceived, CancellationToken cancellationToken)
+        public Task Send(object messageToSend, TimeSpan timeToBeReceived, CancellationToken cancellationToken = default)
         {
             var body = Serialize(messageToSend);
             return Send(body, messageToSend.GetType().FullName, timeToBeReceived, cancellationToken);

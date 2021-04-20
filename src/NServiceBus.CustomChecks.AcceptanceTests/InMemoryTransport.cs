@@ -12,7 +12,7 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
         {
         }
 
-        public override Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses, CancellationToken cancellationToken)
+        public override Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses, CancellationToken cancellationToken = default)
         {
             return Task.FromResult<TransportInfrastructure>(
                 new InMemTransportInfrastructure(hostSettings.CoreSettings));
@@ -42,14 +42,14 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
                     this.queue = queue;
                 }
 
-                public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, CancellationToken cancellationToken)
+                public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, CancellationToken cancellationToken = default)
                 {
                     queue.Enqueue(outgoingMessages);
                     return Task.FromResult(0);
                 }
             }
 
-            public override Task Shutdown(CancellationToken cancellationToken) => Task.FromResult(0);
+            public override Task Shutdown(CancellationToken cancellationToken = default) => Task.FromResult(0);
         }
     }
 }

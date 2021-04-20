@@ -22,7 +22,7 @@
             this.customChecks = customChecks.ToList();
         }
 
-        protected override Task OnStart(IMessageSession session, CancellationToken cancellationToken)
+        protected override Task OnStart(IMessageSession session, CancellationToken cancellationToken = default)
         {
             if (!customChecks.Any())
             {
@@ -58,7 +58,7 @@
             return Task.CompletedTask;
         }
 
-        protected override async Task OnStop(IMessageSession session, CancellationToken cancellationToken)
+        protected override async Task OnStop(IMessageSession session, CancellationToken cancellationToken = default)
         {
             if (!customChecks.Any())
             {

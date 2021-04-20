@@ -28,6 +28,6 @@
         /// Performs the check.
         /// </summary>
         /// <returns>The result of the check.</returns>
-        Task<CheckResult> PerformCheck(CancellationToken cancellationToken);
+        Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default);
     }
 }

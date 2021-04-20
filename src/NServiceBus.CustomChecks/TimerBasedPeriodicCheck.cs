@@ -51,7 +51,7 @@ namespace NServiceBus.CustomChecks
             }, CancellationToken.None);
         }
 
-        public Task Stop()
+        public Task Stop(CancellationToken cancellationToken = default)
         {
             stopPeriodicChecksTokenSource?.Cancel();
 

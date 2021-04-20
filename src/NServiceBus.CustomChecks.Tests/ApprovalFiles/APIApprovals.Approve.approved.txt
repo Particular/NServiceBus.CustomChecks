@@ -16,14 +16,14 @@ namespace NServiceBus.CustomChecks
         public string Category { get; }
         public string Id { get; }
         public System.TimeSpan? Interval { get; }
-        public abstract System.Threading.Tasks.Task<NServiceBus.CustomChecks.CheckResult> PerformCheck(System.Threading.CancellationToken cancellationToken);
+        public abstract System.Threading.Tasks.Task<NServiceBus.CustomChecks.CheckResult> PerformCheck(System.Threading.CancellationToken cancellationToken = default);
     }
     public interface ICustomCheck
     {
         string Category { get; }
         string Id { get; }
         System.TimeSpan? Interval { get; }
-        System.Threading.Tasks.Task<NServiceBus.CustomChecks.CheckResult> PerformCheck(System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task<NServiceBus.CustomChecks.CheckResult> PerformCheck(System.Threading.CancellationToken cancellationToken = default);
     }
 }
 namespace NServiceBus
