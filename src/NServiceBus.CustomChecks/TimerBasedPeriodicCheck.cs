@@ -39,9 +39,16 @@ namespace NServiceBus.CustomChecks
                         await Task.Delay(customCheck.Interval.Value, stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
                     }
                 }
-                catch (OperationCanceledException ex) when (ex.CancellationToken == stopPeriodicChecksTokenSource.Token)
+                catch (OperationCanceledException ex)
                 {
-                    //no-op
+                    if (stopPeriodicChecksTokenSource.IsCancellationRequested)
+                    {
+                        Logger.Debug("Periodic check cancelled.", ex);
+                    }
+                    else
+                    {
+                        Logger.Warn("OperationCanceledException thrown.", ex);
+                    }
                     return;
                 }
                 catch (Exception ex)
@@ -67,8 +74,8 @@ namespace NServiceBus.CustomChecks
             }
             catch (OperationCanceledException)
             {
-                //no-op
-                return;
+                // Handled by the Task.Run delegate above
+                throw;
             }
             catch (Exception ex)
             {
@@ -81,6 +88,11 @@ namespace NServiceBus.CustomChecks
             {
                 var checkResult = messageFactory(customCheck.Id, customCheck.Category, result);
                 await serviceControlBackend.Send(checkResult, ttl, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // Handled by the Task.Run delegate above
+                throw;
             }
             catch (Exception ex)
             {
