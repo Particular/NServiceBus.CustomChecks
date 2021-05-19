@@ -32,7 +32,7 @@ namespace NServiceBus.CustomChecks
                         return;
                     }
 
-                    while (!stopPeriodicChecksTokenSource.IsCancellationRequested)
+                    while (true)
                     {
                         await Run(stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
 
@@ -72,12 +72,7 @@ namespace NServiceBus.CustomChecks
             {
                 result = await customCheck.PerformCheck(cancellationToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
-            {
-                // Handled by the Task.Run delegate above
-                throw;
-            }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is OperationCanceledException))
             {
                 var reason = $"'{customCheck.GetType()}' implementation failed to run.";
                 result = CheckResult.Failed(reason);
@@ -89,12 +84,7 @@ namespace NServiceBus.CustomChecks
                 var checkResult = messageFactory(customCheck.Id, customCheck.Category, result);
                 await serviceControlBackend.Send(checkResult, ttl, cancellationToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
-            {
-                // Handled by the Task.Run delegate above
-                throw;
-            }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is OperationCanceledException))
             {
                 Logger.Warn("Failed to report periodic check to ServiceControl.", ex);
             }
