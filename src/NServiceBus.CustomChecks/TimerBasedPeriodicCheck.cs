@@ -32,16 +32,23 @@ namespace NServiceBus.CustomChecks
                         return;
                     }
 
-                    while (!stopPeriodicChecksTokenSource.IsCancellationRequested)
+                    while (true)
                     {
                         await Run(stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
 
                         await Task.Delay(customCheck.Interval.Value, stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
                     }
                 }
-                catch (OperationCanceledException ex) when (ex.CancellationToken == stopPeriodicChecksTokenSource.Token)
+                catch (OperationCanceledException ex)
                 {
-                    //no-op
+                    if (stopPeriodicChecksTokenSource.IsCancellationRequested)
+                    {
+                        Logger.Debug("Periodic check cancelled.", ex);
+                    }
+                    else
+                    {
+                        Logger.Warn("OperationCanceledException thrown.", ex);
+                    }
                     return;
                 }
                 catch (Exception ex)
@@ -65,12 +72,7 @@ namespace NServiceBus.CustomChecks
             {
                 result = await customCheck.PerformCheck(cancellationToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
-            {
-                //no-op
-                return;
-            }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is OperationCanceledException))
             {
                 var reason = $"'{customCheck.GetType()}' implementation failed to run.";
                 result = CheckResult.Failed(reason);
@@ -82,7 +84,7 @@ namespace NServiceBus.CustomChecks
                 var checkResult = messageFactory(customCheck.Id, customCheck.Category, result);
                 await serviceControlBackend.Send(checkResult, ttl, cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is OperationCanceledException))
             {
                 Logger.Warn("Failed to report periodic check to ServiceControl.", ex);
             }
