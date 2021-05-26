@@ -41,12 +41,10 @@ namespace NServiceBus.CustomChecks
 
         async Task RunAndSwallowExceptions(CancellationToken cancellationToken)
         {
-            while (true)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
                     try
                     {
                         var result = await InvokeAndWrapFailure(check, cancellationToken).ConfigureAwait(false);
@@ -67,9 +65,10 @@ namespace NServiceBus.CustomChecks
 
                     await Task.Delay(check.Interval.Value, cancellationToken).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException ex) when (ex.IsCausedBy(cancellationToken))
+                catch (Exception ex) when (ex.IsCausedBy(cancellationToken))
                 {
-                    Logger.Debug("Custom check canceled.", ex);
+                    // private token, check is being stopped, log the exception in case the stack trace is ever needed for debugging
+                    Logger.Debug("Operation canceled while stopping custom check.", ex);
                     break;
                 }
                 catch (Exception ex)
