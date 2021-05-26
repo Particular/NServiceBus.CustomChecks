@@ -8,92 +8,101 @@ namespace NServiceBus.CustomChecks
 
     class TimerBasedPeriodicCheck
     {
-        static ILog Logger = LogManager.GetLogger(typeof(TimerBasedPeriodicCheck));
+        static readonly ILog Logger = LogManager.GetLogger<TimerBasedPeriodicCheck>();
 
-        public TimerBasedPeriodicCheck(ICustomCheck customCheck, ServiceControlBackend serviceControlBackend, Func<string, string, CheckResult, ReportCustomCheckResult> messageFactory, TimeSpan ttl)
+        readonly ICustomCheck check;
+        readonly ServiceControlBackend messageSender;
+        readonly Func<CheckResult, ReportCustomCheckResult> messageFactory;
+        readonly TimeSpan ttl;
+
+        CancellationTokenSource stopTokenSource;
+
+        public TimerBasedPeriodicCheck(ICustomCheck check, ServiceControlBackend messageSender, Func<CheckResult, ReportCustomCheckResult> messageFactory, TimeSpan ttl)
         {
-            this.customCheck = customCheck;
-            this.serviceControlBackend = serviceControlBackend;
+            this.check = check;
+            this.messageSender = messageSender;
             this.messageFactory = messageFactory;
             this.ttl = ttl;
         }
 
         public void Start()
         {
-            stopPeriodicChecksTokenSource = new CancellationTokenSource();
+            stopTokenSource = new CancellationTokenSource();
 
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    if (!customCheck.Interval.HasValue)
-                    {
-                        await Run(stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
-                        return;
-                    }
-
-                    while (true)
-                    {
-                        await Run(stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
-
-                        await Task.Delay(customCheck.Interval.Value, stopPeriodicChecksTokenSource.Token).ConfigureAwait(false);
-                    }
-                }
-                catch (OperationCanceledException ex)
-                {
-                    if (stopPeriodicChecksTokenSource.IsCancellationRequested)
-                    {
-                        Logger.Debug("Periodic check cancelled.", ex);
-                    }
-                    else
-                    {
-                        Logger.Warn("OperationCanceledException thrown.", ex);
-                    }
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error("Failed to run periodic custom checks", ex);
-                }
-            }, CancellationToken.None);
+            _ = RunAndSwallowExceptions(stopTokenSource.Token);
         }
 
         public Task Stop(CancellationToken cancellationToken = default)
         {
-            stopPeriodicChecksTokenSource?.Cancel();
+            stopTokenSource?.Cancel();
 
             return Task.CompletedTask;
         }
 
-        async Task Run(CancellationToken cancellationToken)
+        async Task RunAndSwallowExceptions(CancellationToken cancellationToken)
         {
-            CheckResult result;
-            try
+            while (!cancellationToken.IsCancellationRequested)
             {
-                result = await customCheck.PerformCheck(cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex) when (!(ex is OperationCanceledException))
-            {
-                var reason = $"'{customCheck.GetType()}' implementation failed to run.";
-                result = CheckResult.Failed(reason);
-                Logger.Error(reason, ex);
-            }
+                try
+                {
+                    try
+                    {
+                        var result = await InvokeAndWrapFailure(check, cancellationToken).ConfigureAwait(false);
 
-            try
-            {
-                var checkResult = messageFactory(customCheck.Id, customCheck.Category, result);
-                await serviceControlBackend.Send(checkResult, ttl, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex) when (!(ex is OperationCanceledException))
-            {
-                Logger.Warn("Failed to report periodic check to ServiceControl.", ex);
+                        var message = messageFactory(result);
+
+                        await SendAndWarnOnFailure(messageSender, message, ttl, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
+                    {
+                        Logger.Error("Custom check failed but can be retried.", ex);
+                    }
+
+                    if (!check.Interval.HasValue)
+                    {
+                        break;
+                    }
+
+                    await Task.Delay(check.Interval.Value, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex.IsCausedBy(cancellationToken))
+                {
+                    // private token, check is being stopped, log the exception in case the stack trace is ever needed for debugging
+                    Logger.Debug("Operation canceled while stopping custom check.", ex);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("Custom check failed and cannot be retried.", ex);
+                    break;
+                }
             }
         }
 
-        CancellationTokenSource stopPeriodicChecksTokenSource;
-        ICustomCheck customCheck;
-        ServiceControlBackend serviceControlBackend;
-        Func<string, string, CheckResult, ReportCustomCheckResult> messageFactory;
-        TimeSpan ttl;
+        static async Task SendAndWarnOnFailure(ServiceControlBackend sender, ReportCustomCheckResult message, TimeSpan ttl, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await sender.Send(message, ttl, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
+            {
+                Logger.Warn("Failed to send periodic check to ServiceControl.", ex);
+            }
+        }
+
+        static async Task<CheckResult> InvokeAndWrapFailure(ICustomCheck check, CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await check.PerformCheck(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
+            {
+                var reason = $"'{check.GetType()}' implementation failed to run.";
+                Logger.Error(reason, ex);
+                return CheckResult.Failed(reason);
+            }
+        }
     }
 }

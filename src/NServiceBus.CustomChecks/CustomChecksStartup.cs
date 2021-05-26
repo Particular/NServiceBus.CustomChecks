@@ -38,10 +38,10 @@
                     ? ttl ?? TimeSpan.FromTicks(check.Interval.Value.Ticks * 4)
                     : TimeSpan.MaxValue;
 
-                var timerBasedPeriodicCheck = new TimerBasedPeriodicCheck(check, backend, (id, category, result) => new ReportCustomCheckResult
+                var timerBasedPeriodicCheck = new TimerBasedPeriodicCheck(check, backend, (result) => new ReportCustomCheckResult
                 {
-                    CustomCheckId = id,
-                    Category = category,
+                    CustomCheckId = check.Id,
+                    Category = check.Category,
                     HasFailed = result.HasFailed,
                     FailureReason = result.FailureReason,
                     ReportedAt = DateTime.UtcNow,
