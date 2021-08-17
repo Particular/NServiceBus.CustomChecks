@@ -27,7 +27,7 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
         {
             Queue<TransportOperations> queue;
 
-            public InMemTransportInfrastructure(ReadOnlySettings settings)
+            public InMemTransportInfrastructure(IReadOnlySettings settings)
             {
                 queue = settings.Get<Queue<TransportOperations>>("InMemQueue");
                 Dispatcher = new MessageDispatcher(queue);

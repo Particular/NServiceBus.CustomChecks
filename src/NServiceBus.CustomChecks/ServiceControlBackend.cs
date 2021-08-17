@@ -56,7 +56,7 @@
             return messageSender?.Dispatch(new TransportOperations(operation), new TransportTransaction(), cancellationToken);
         }
 
-        static string sendIntent = MessageIntentEnum.Send.ToString();
+        static string sendIntent = MessageIntent.Send.ToString();
         string destinationQueue;
         string localAddress;
 
