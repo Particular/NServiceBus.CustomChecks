@@ -12,10 +12,10 @@
 
     class ServiceControlBackend
     {
-        public ServiceControlBackend(string destinationQueue, string localAddress)
+        public ServiceControlBackend(string destinationQueue, ReceiveAddresses receiveAddresses)
         {
             this.destinationQueue = destinationQueue;
-            this.localAddress = localAddress;
+            this.receiveAddresses = receiveAddresses;
         }
 
         public Task Send(object messageToSend, TimeSpan timeToBeReceived, CancellationToken cancellationToken = default)
@@ -42,9 +42,9 @@
                 [Headers.ContentType] = ContentTypes.Json,
                 [Headers.MessageIntent] = sendIntent
             };
-            if (localAddress != null)
+            if (receiveAddresses != null)
             {
-                headers[Headers.ReplyToAddress] = localAddress;
+                headers[Headers.ReplyToAddress] = receiveAddresses.MainReceiveAddress;
             }
 
             var outgoingMessage = new OutgoingMessage(Guid.NewGuid().ToString(), headers, body);
@@ -58,7 +58,7 @@
 
         static string sendIntent = MessageIntent.Send.ToString();
         string destinationQueue;
-        string localAddress;
+        readonly ReceiveAddresses receiveAddresses; // this will be null on send-only endpoints
 
         static IJsonSerializerStrategy serializerStrategy = new MessageSerializationStrategy();
         IMessageDispatcher messageSender;

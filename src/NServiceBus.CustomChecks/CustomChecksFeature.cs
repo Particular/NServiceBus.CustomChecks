@@ -18,16 +18,23 @@
                 .ToList()
                 .ForEach(t => context.Services.AddTransient(typeof(ICustomCheck), t));
 
-            var replyToAddress = !context.Settings.GetOrDefault<bool>("Endpoint.SendOnly")
-                ? context.Settings.LocalAddress()
-                : null;
-
             context.Settings.TryGet("NServiceBus.CustomChecks.Ttl", out TimeSpan? ttl);
 
             var serviceControlQueue = context.Settings.Get<string>("NServiceBus.CustomChecks.Queue");
-            var backend = new ServiceControlBackend(serviceControlQueue, replyToAddress);
 
-            context.RegisterStartupTask(b => new CustomChecksStartup(b.GetServices<ICustomCheck>(), b.GetRequiredService<IMessageDispatcher>(), backend, b.GetRequiredService<HostInformation>(), context.Settings.EndpointName(), ttl));
+            context.RegisterStartupTask(b =>
+            {
+                // ReceiveAddresses is not registered on send-only endpoints
+                var backend = new ServiceControlBackend(serviceControlQueue, b.GetService<ReceiveAddresses>());
+
+                return new CustomChecksStartup(
+                    b.GetServices<ICustomCheck>(),
+                    b.GetRequiredService<IMessageDispatcher>(),
+                    backend,
+                    b.GetRequiredService<HostInformation>(),
+                    context.Settings.EndpointName(),
+                    ttl);
+            });
         }
     }
 }
