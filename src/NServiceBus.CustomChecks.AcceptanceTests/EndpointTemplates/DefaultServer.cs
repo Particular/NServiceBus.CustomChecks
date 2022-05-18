@@ -17,7 +17,7 @@
         {
             this.typesToInclude = typesToInclude;
         }
-        public async Task<EndpointConfiguration> GetConfiguration(RunDescriptor runDescriptor, EndpointCustomizationConfiguration endpointConfiguration, Action<EndpointConfiguration> configurationBuilderCustomization)
+        public async Task<EndpointConfiguration> GetConfiguration(RunDescriptor runDescriptor, EndpointCustomizationConfiguration endpointConfiguration, Func<EndpointConfiguration, Task> configurationBuilderCustomization)
         {
             var types = endpointConfiguration.GetTypesScopedByTestClass();
 
@@ -34,7 +34,7 @@
             configuration.SendFailedMessagesTo("error");
             configuration.UseSerialization<NewtonsoftSerializer>();
 
-            configurationBuilderCustomization(configuration);
+            await configurationBuilderCustomization(configuration);
 
             await configuration.DefineTransport(runDescriptor, endpointConfiguration).ConfigureAwait(false);
 
