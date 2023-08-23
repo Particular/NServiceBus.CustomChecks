@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net8.0</TargetFrameworks>
@@ -9,8 +9,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitHubActionsTestLogger" Version="2.0.1" />
-    <PackageReference Include="NServiceBus.AcceptanceTesting" Version="8.1.1" />
+    <PackageReference Include="GitHubActionsTestLogger" Version="2.3.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="NServiceBus.AcceptanceTesting" Version="9.0.0-alpha.1" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="3.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.1" />
     <PackageReference Include="NUnit" Version="3.13.3" />
