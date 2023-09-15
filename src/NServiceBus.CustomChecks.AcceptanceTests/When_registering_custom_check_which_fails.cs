@@ -6,8 +6,6 @@
     using AcceptanceTesting;
     using CustomChecks;
     using NServiceBus;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using ServiceControl.Plugin.CustomChecks.Messages;
 
@@ -42,7 +40,7 @@
         {
             public Sender()
             {
-                EndpointSetup<DefaultServer>(c =>
+                EndpointSetup<DefaultServerWithJson>(c =>
                 {
                     var receiverEndpoint = AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(FakeServiceControl));
                     c.ReportCustomChecksTo(receiverEndpoint);
@@ -68,7 +66,7 @@
             public FakeServiceControl()
             {
                 IncludeType<ReportCustomCheckResult>();
-                EndpointSetup<DefaultServer>();
+                EndpointSetup<DefaultServerWithJson>();
             }
 
             public class MyMessageHandler : IHandleMessages<ReportCustomCheckResult>

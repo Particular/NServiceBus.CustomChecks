@@ -8,8 +8,6 @@
     using AcceptanceTesting;
     using Configuration.AdvancedExtensibility;
     using CustomChecks;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using Transport;
 
@@ -38,7 +36,7 @@
         {
             public Sender()
             {
-                EndpointSetup<DefaultServer>(c =>
+                EndpointSetup<DefaultServerWithJson>(c =>
                 {
                     c.ReportCustomChecksTo("ServiceControl", TimeSpan.FromSeconds(6));
                     c.UseTransport(new InMemoryTransport());

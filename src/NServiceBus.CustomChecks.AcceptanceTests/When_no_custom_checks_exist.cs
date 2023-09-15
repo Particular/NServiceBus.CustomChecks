@@ -3,8 +3,6 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using NServiceBus;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
 
     class When_no_custom_checks_exist : NServiceBusAcceptanceTest
@@ -29,7 +27,7 @@
         {
             public Sender()
             {
-                EndpointSetup<DefaultServer>();
+                EndpointSetup<DefaultServerWithJson>();
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>

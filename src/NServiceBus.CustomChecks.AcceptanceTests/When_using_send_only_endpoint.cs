@@ -1,12 +1,9 @@
 ﻿namespace NServiceBus.CustomChecks.AcceptanceTests
 {
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using ServiceControl.Plugin.CustomChecks.Messages;
 
@@ -41,7 +38,7 @@
         {
             public CustomCheckEndpoint()
             {
-                EndpointSetup<DefaultServer>(c =>
+                EndpointSetup<DefaultServerWithJson>(c =>
                 {
                     c.ReportCustomChecksTo(ServiceControlQueue);
                     c.SendOnly();
@@ -65,7 +62,7 @@
             public FakeServiceControl()
             {
                 IncludeType<ReportCustomCheckResult>();
-                EndpointSetup<DefaultServer>();
+                EndpointSetup<DefaultServerWithJson>();
             }
 
             public class CustomCheckResultHandler : IHandleMessages<ReportCustomCheckResult>
