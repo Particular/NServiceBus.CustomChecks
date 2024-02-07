@@ -2,12 +2,11 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Text;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using Performance.TimeToBeReceived;
     using Routing;
-    using SimpleJson;
     using Transport;
 
     class ServiceControlBackend
@@ -24,10 +23,7 @@
             return Send(body, messageToSend.GetType().FullName, timeToBeReceived, cancellationToken);
         }
 
-        internal static byte[] Serialize(object messageToSend)
-        {
-            return Encoding.UTF8.GetBytes(SimpleJson.SerializeObject(messageToSend, serializerStrategy));
-        }
+        internal static byte[] Serialize(object messageToSend) => JsonSerializer.SerializeToUtf8Bytes(messageToSend);
 
         public void Start(IMessageDispatcher dispatcher)
         {
@@ -60,7 +56,6 @@
         string destinationQueue;
         readonly ReceiveAddresses receiveAddresses; // this will be null on send-only endpoints
 
-        static IJsonSerializerStrategy serializerStrategy = new MessageSerializationStrategy();
         IMessageDispatcher messageSender;
     }
 }
