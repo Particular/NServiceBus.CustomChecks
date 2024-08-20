@@ -28,7 +28,7 @@
             Assert.AreEqual("CustomCheckInSendOnlyEndpoint", testContext.CustomCheckResult.CustomCheckId);
 
             Assert.AreEqual(typeof(ReportCustomCheckResult).FullName, testContext.CustomCheckResultHeaders[Headers.EnclosedMessageTypes]);
-            Assert.IsFalse(testContext.CustomCheckResultHeaders.ContainsKey(Headers.ReplyToAddress));
+            Assert.That(testContext.CustomCheckResultHeaders.ContainsKey(Headers.ReplyToAddress), Is.False);
         }
 
         class Context : ScenarioContext
