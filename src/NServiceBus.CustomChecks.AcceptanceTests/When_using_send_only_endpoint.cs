@@ -23,12 +23,15 @@
                 .Done(c => c.CustomCheckResult != null)
                 .Run();
 
-            Assert.That(testContext.CustomCheckResult.EndpointName, Is.EqualTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(CustomCheckEndpoint))));
-            Assert.That(testContext.CustomCheckResult.HasFailed, Is.EqualTo(false));
-            Assert.That(testContext.CustomCheckResult.CustomCheckId, Is.EqualTo("CustomCheckInSendOnlyEndpoint"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(testContext.CustomCheckResult.EndpointName, Is.EqualTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(CustomCheckEndpoint))));
+                Assert.That(testContext.CustomCheckResult.HasFailed, Is.EqualTo(false));
+                Assert.That(testContext.CustomCheckResult.CustomCheckId, Is.EqualTo("CustomCheckInSendOnlyEndpoint"));
 
-            Assert.That(testContext.CustomCheckResultHeaders[Headers.EnclosedMessageTypes], Is.EqualTo(typeof(ReportCustomCheckResult).FullName));
-            Assert.That(testContext.CustomCheckResultHeaders.ContainsKey(Headers.ReplyToAddress), Is.False);
+                Assert.That(testContext.CustomCheckResultHeaders[Headers.EnclosedMessageTypes], Is.EqualTo(typeof(ReportCustomCheckResult).FullName));
+                Assert.That(testContext.CustomCheckResultHeaders.ContainsKey(Headers.ReplyToAddress), Is.False);
+            });
         }
 
         class Context : ScenarioContext
