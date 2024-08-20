@@ -23,8 +23,8 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
                 .Run();
 
             Assert.Null(context.FailureReason);
-            Assert.AreEqual("SuccessfulCustomCheck", context.CustomCheckId);
-            Assert.AreEqual("CustomCheck", context.Category);
+            Assert.That(context.CustomCheckId, Is.EqualTo("SuccessfulCustomCheck"));
+            Assert.That(context.Category, Is.EqualTo("CustomCheck"));
             Assert.That(context.ReportedAt, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(3.0)));
         }
 
