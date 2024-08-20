@@ -23,12 +23,12 @@
                 .Done(c => c.WasCalled)
                 .Run();
 
-            Assert.True(context.WasCalled);
+            Assert.That(context.WasCalled, Is.True);
             Assert.Null(context.FailureReason);
             Assert.AreEqual("SuccessfulCustomCheck", context.CustomCheckId);
             Assert.AreEqual("CustomCheck", context.Category);
             Assert.That(context.ReportedAt, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(3.0)));
-            Assert.True(context.Headers.ContainsKey(Headers.ReplyToAddress));
+            Assert.That(context.Headers.ContainsKey(Headers.ReplyToAddress), Is.True);
         }
 
         class Context : ScenarioContext

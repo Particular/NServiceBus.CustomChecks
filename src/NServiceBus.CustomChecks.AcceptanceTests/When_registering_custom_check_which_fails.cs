@@ -22,7 +22,7 @@
                 .Done(c => c.WasCalled)
                 .Run(TimeSpan.FromSeconds(10));
 
-            Assert.True(context.WasCalled);
+            Assert.That(context.WasCalled, Is.True);
             Assert.AreEqual("Some reason", context.FailureReason);
             Assert.AreEqual("FailingCustomCheck", context.CustomCheckId);
             Assert.AreEqual("CustomCheck", context.Category);
