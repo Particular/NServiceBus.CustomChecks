@@ -22,10 +22,13 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
                 .Done(c => c.Times >= 2)
                 .Run();
 
-            Assert.Null(context.FailureReason);
-            Assert.AreEqual("SuccessfulCustomCheck", context.CustomCheckId);
-            Assert.AreEqual("CustomCheck", context.Category);
-            Assert.That(context.ReportedAt, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(3.0)));
+            Assert.Multiple(() =>
+            {
+                Assert.That(context.FailureReason, Is.Null);
+                Assert.That(context.CustomCheckId, Is.EqualTo("SuccessfulCustomCheck"));
+                Assert.That(context.Category, Is.EqualTo("CustomCheck"));
+                Assert.That(context.ReportedAt, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(3.0)));
+            });
         }
 
         class Context : ScenarioContext

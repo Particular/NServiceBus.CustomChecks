@@ -26,7 +26,7 @@
             var message = context.Queue.Dequeue();
 
             var constraint = message.UnicastTransportOperations.First().Properties.DiscardIfNotReceivedBefore;
-            Assert.AreEqual(TimeSpan.FromSeconds(4), constraint.MaxTime);
+            Assert.That(constraint.MaxTime, Is.EqualTo(TimeSpan.FromSeconds(4)));
         }
 
         class Context : ScenarioContext
