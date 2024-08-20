@@ -24,7 +24,7 @@
                 .Run();
 
             Assert.That(context.WasCalled, Is.True);
-            Assert.Null(context.FailureReason);
+            Assert.That(context.FailureReason, Is.Null);
             Assert.That(context.CustomCheckId, Is.EqualTo("SuccessfulCustomCheck"));
             Assert.That(context.Category, Is.EqualTo("CustomCheck"));
             Assert.That(context.ReportedAt, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(3.0)));
