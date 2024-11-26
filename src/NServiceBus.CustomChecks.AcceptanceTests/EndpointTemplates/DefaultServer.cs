@@ -32,7 +32,7 @@
             recoverability.Delayed(delayed => delayed.NumberOfRetries(0));
             recoverability.Immediate(immediate => immediate.NumberOfRetries(0));
             configuration.SendFailedMessagesTo("error");
-            configuration.UseSerialization<NewtonsoftJsonSerializer>();
+            configuration.UseSerialization<SystemJsonSerializer>();
 
             await configurationBuilderCustomization(configuration);
 
