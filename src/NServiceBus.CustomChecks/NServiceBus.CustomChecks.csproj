@@ -11,11 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NServiceBus" Version="9.2.3" />
+    <PackageReference Include="NServiceBus" Version="10.0.0-alpha.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Particular.Packaging" Version="4.2.2" PrivateAssets="All" />
+    <PackageReference Include="Particular.Packaging" Version="4.3.1" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
