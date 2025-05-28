@@ -19,9 +19,6 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
                 new InMemTransportInfrastructure(hostSettings.CoreSettings));
         }
 
-        [Obsolete("Inject the ITransportAddressResolver type to access the address translation mechanism at runtime. See the NServiceBus version 8 upgrade guide for further details. Will be treated as an error from version 9.0.0. Will be removed in version 10.0.0.", false)]
-        public override string ToTransportAddress(QueueAddress address) => address.BaseAddress;
-
         public override IReadOnlyCollection<TransportTransactionMode> GetSupportedTransactionModes() =>
             new[] { TransportTransactionMode.None };
 
