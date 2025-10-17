@@ -42,25 +42,6 @@ namespace NServiceBus.CustomChecks
         }
 
         /// <summary>
-        /// Adds a custom check type via manual registration.
-        /// </summary>
-        /// <param name="checkType">The custom check type to add. Must implement ICustomCheck.</param>
-        /// <exception cref="ArgumentException">Thrown if checkType does not implement ICustomCheck.</exception>
-        /// <exception cref="ArgumentNullException">Thrown if checkType is null.</exception>
-        public void AddCheck(Type checkType)
-        {
-            ArgumentNullException.ThrowIfNull(checkType);
-
-            // Validate ICustomCheck implementation
-            if (!typeof(ICustomCheck).IsAssignableFrom(checkType))
-            {
-                throw new ArgumentException($"Type {checkType.Name} does not implement {nameof(ICustomCheck)}", nameof(checkType));
-            }
-
-            allCheckTypes.Add(checkType);
-        }
-
-        /// <summary>
         /// Gets all custom check types from the registry.
         /// Automatically handles deduplication.
         /// </summary>
