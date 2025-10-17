@@ -65,6 +65,10 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
             public FakeServiceControl()
             {
                 IncludeType<ReportCustomCheckResult>();
+
+                // todo: mm review
+                ExcludeType<ManualOnlyCheck>();
+
                 EndpointSetup<DefaultServer>();
             }
 
@@ -95,6 +99,8 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
     // It will only be registered via the manual registration API
     class ManualOnlyCheck : CustomCheck
     {
+        //todo: not necessary - could move inside.... 
+
         public ManualOnlyCheck()
             : base("ManualOnlyCheck", "Manual")
         {

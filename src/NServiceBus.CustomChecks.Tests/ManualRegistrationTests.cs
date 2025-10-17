@@ -23,11 +23,11 @@ namespace NServiceBus.CustomChecks.Tests
         {
             var config = new EndpointConfiguration("TestEndpoint");
 
-            // Add custom check manually
+            // Add custom check manually with default registerOnContainer=true
             config.AddCustomCheck<TestCustomCheck>();
 
             // Verify the registry was created and stored in settings
-            var registry = config.GetSettings().Get<CustomCheckRegistry>("NServiceBus.CustomChecks.Registry");
+            var registry = config.GetSettings().Get<CustomCheckRegistry>(typeof(CustomCheckRegistry).FullName);
             var registeredTypes = registry.GetAllCheckTypes();
 
             // Assert the check was properly registered
@@ -47,7 +47,7 @@ namespace NServiceBus.CustomChecks.Tests
             config.AddCustomCheck<AnotherTestCustomCheck>();
 
             // Verify all checks were registered in the same registry
-            var registry = config.GetSettings().Get<CustomCheckRegistry>("NServiceBus.CustomChecks.Registry");
+            var registry = config.GetSettings().Get<CustomCheckRegistry>(typeof(CustomCheckRegistry).FullName);
             var registeredTypes = registry.GetAllCheckTypes();
 
             // Assert both checks were properly registered
@@ -57,15 +57,22 @@ namespace NServiceBus.CustomChecks.Tests
         }
 
         /// <summary>
-        /// Verifies that an ArgumentException is thrown when trying to register an invalid type.
+        /// Verifies that custom checks can be registered without automatic DI container registration.
         /// </summary>
         [Test]
-        public void Should_throw_when_adding_invalid_type()
+        public void Should_add_custom_check_without_container_registration()
         {
             var config = new EndpointConfiguration("TestEndpoint");
 
-            // Attempt to register a type that doesn't implement ICustomCheck
-            Assert.Throws<ArgumentException>(() => config.AddCustomCheck(typeof(string)));
+            // Add custom check manually without DI registration
+            config.AddCustomCheck<TestCustomCheck>(registerOnContainer: false);
+
+            // Verify the registry was created and stored in settings
+            var registry = config.GetSettings().Get<CustomCheckRegistry>(typeof(CustomCheckRegistry).FullName);
+            var registeredTypes = registry.GetAllCheckTypes();
+
+            // Assert the check was properly registered in the registry
+            Assert.That(registeredTypes, Contains.Item(typeof(TestCustomCheck)));
         }
 
         /// <summary>
