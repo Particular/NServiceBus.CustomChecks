@@ -5,7 +5,6 @@
     using Hosting;
     using Microsoft.Extensions.DependencyInjection;
     using NServiceBus;
-    using Settings;
     using Transport;
 
     class CustomChecksFeature : Feature
@@ -15,8 +14,12 @@
         /// </summary>
         protected override void Setup(FeatureConfigurationContext context)
         {
-            // Get or create the central registry
-            var registry = GetOrCreateRegistry(context.Settings);
+            // GetOrCreate uses type-based key, so we need to check if registry was already created
+            var registryType = typeof(CustomCheckRegistry);
+            if (!context.Settings.TryGet(registryType.FullName, out CustomCheckRegistry registry))
+            {
+                registry = new();
+            }
 
             // Add assembly scanned types to the registry
             registry.AddScannedTypes(context.Settings.GetAvailableTypes());
@@ -46,23 +49,6 @@
                     context.Settings.EndpointName(),
                     ttl);
             });
-        }
-
-        /// <summary>
-        /// Gets the central CustomCheckRegistry instance from Settings.
-        /// </summary>
-        /// <param name="settings">The NServiceBus settings containing the registry.</param>
-        /// <returns>The existing CustomCheckRegistry instance, or a new one if none exists.</returns>
-        static CustomCheckRegistry GetOrCreateRegistry(IReadOnlySettings settings)
-        {
-            // Try to get existing registry from settings
-            if (settings.TryGet<CustomCheckRegistry>("NServiceBus.CustomChecks.Registry", out var registry))
-            {
-                return registry;
-            }
-
-            // Create new registry if none exists
-            return new CustomCheckRegistry();
         }
     }
 }
