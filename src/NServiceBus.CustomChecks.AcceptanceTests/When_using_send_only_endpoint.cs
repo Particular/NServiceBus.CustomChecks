@@ -47,7 +47,6 @@
                         c.ReportCustomChecksTo(ServiceControlQueue);
                         c.SendOnly();
                     })
-                    .IncludeType<ReportCustomCheckResult>()
                     .IncludeType<TestCheck>();
 
 
@@ -59,7 +58,7 @@
 
         class FakeServiceControl : EndpointConfigurationBuilder
         {
-            public FakeServiceControl() => EndpointSetup<DefaultServer>().IncludeType<ReportCustomCheckResult>();
+            public FakeServiceControl() => EndpointSetup<DefaultServer>();
 
             public class CustomCheckResultHandler(Context scenarioContext) : IHandleMessages<ReportCustomCheckResult>
             {

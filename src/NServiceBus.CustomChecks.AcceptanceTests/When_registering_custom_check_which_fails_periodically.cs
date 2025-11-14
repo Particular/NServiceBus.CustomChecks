@@ -63,11 +63,7 @@
 
         class FakeServiceControl : EndpointConfigurationBuilder
         {
-            public FakeServiceControl()
-            {
-                IncludeType<ReportCustomCheckResult>();
-                EndpointSetup<DefaultServer>();
-            }
+            public FakeServiceControl() => EndpointSetup<DefaultServer>();
 
             public class MyMessageHandler(Context testContext) : IHandleMessages<ReportCustomCheckResult>
             {
