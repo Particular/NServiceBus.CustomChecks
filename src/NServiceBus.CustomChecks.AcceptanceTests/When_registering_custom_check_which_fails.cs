@@ -22,14 +22,14 @@
                 .Done(c => c.WasCalled)
                 .Run(TimeSpan.FromSeconds(10));
 
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(context.WasCalled, Is.True);
                 Assert.That(context.FailureReason, Is.EqualTo("Some reason"));
                 Assert.That(context.CustomCheckId, Is.EqualTo("FailingCustomCheck"));
                 Assert.That(context.Category, Is.EqualTo("CustomCheck"));
                 Assert.That(context.ReportedAt, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(3.0)));
-            });
+            }
         }
 
         class Context : ScenarioContext
@@ -43,26 +43,16 @@
 
         class Sender : EndpointConfigurationBuilder
         {
-            public Sender()
-            {
+            public Sender() =>
                 EndpointSetup<DefaultServer>(c =>
                 {
                     var receiverEndpoint = AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(FakeServiceControl));
                     c.ReportCustomChecksTo(receiverEndpoint);
-                });
-            }
+                }).IncludeType<FailingCustomCheck>();
 
-            class FailingCustomCheck : CustomCheck
+            class FailingCustomCheck() : CustomCheck("FailingCustomCheck", "CustomCheck")
             {
-                public FailingCustomCheck()
-                    : base("FailingCustomCheck", "CustomCheck")
-                {
-                }
-
-                public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default)
-                {
-                    return CheckResult.Failed("Some reason");
-                }
+                public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default) => CheckResult.Failed("Some reason");
             }
         }
 
@@ -74,15 +64,8 @@
                 EndpointSetup<DefaultServer>();
             }
 
-            public class MyMessageHandler : IHandleMessages<ReportCustomCheckResult>
+            public class MyMessageHandler(Context testContext) : IHandleMessages<ReportCustomCheckResult>
             {
-                Context testContext;
-
-                public MyMessageHandler(Context testContext)
-                {
-                    this.testContext = testContext;
-                }
-
                 public Task Handle(ReportCustomCheckResult message, IMessageHandlerContext context)
                 {
                     testContext.FailureReason = message.FailureReason;
@@ -90,7 +73,7 @@
                     testContext.Category = message.Category;
                     testContext.ReportedAt = message.ReportedAt;
                     testContext.WasCalled = true;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
         }

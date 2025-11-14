@@ -1,6 +1,5 @@
 ﻿namespace NServiceBus.CustomChecks.AcceptanceTests
 {
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
@@ -23,7 +22,7 @@
                 .Done(c => c.CustomCheckResult != null)
                 .Run();
 
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(testContext.CustomCheckResult.EndpointName, Is.EqualTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(CustomCheckEndpoint))));
                 Assert.That(testContext.CustomCheckResult.HasFailed, Is.EqualTo(false));
@@ -31,7 +30,7 @@
 
                 Assert.That(testContext.CustomCheckResultHeaders[Headers.EnclosedMessageTypes], Is.EqualTo(typeof(ReportCustomCheckResult).FullName));
                 Assert.That(testContext.CustomCheckResultHeaders.ContainsKey(Headers.ReplyToAddress), Is.False);
-            });
+            }
         }
 
         class Context : ScenarioContext
@@ -42,48 +41,33 @@
 
         class CustomCheckEndpoint : EndpointConfigurationBuilder
         {
-            public CustomCheckEndpoint()
-            {
+            public CustomCheckEndpoint() =>
                 EndpointSetup<DefaultServer>(c =>
-                {
-                    c.ReportCustomChecksTo(ServiceControlQueue);
-                    c.SendOnly();
-                });
-                IncludeType<ReportCustomCheckResult>();
-            }
+                    {
+                        c.ReportCustomChecksTo(ServiceControlQueue);
+                        c.SendOnly();
+                    })
+                    .IncludeType<ReportCustomCheckResult>()
+                    .IncludeType<TestCheck>();
 
 
-            class TestCheck : CustomCheck
+            class TestCheck() : CustomCheck("CustomCheckInSendOnlyEndpoint", "Tests")
             {
-                public TestCheck() : base("CustomCheckInSendOnlyEndpoint", "Tests")
-                {
-                }
-
                 public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default) => Task.FromResult(CheckResult.Pass);
             }
         }
 
         class FakeServiceControl : EndpointConfigurationBuilder
         {
-            public FakeServiceControl()
-            {
-                IncludeType<ReportCustomCheckResult>();
-                EndpointSetup<DefaultServer>();
-            }
+            public FakeServiceControl() => EndpointSetup<DefaultServer>().IncludeType<ReportCustomCheckResult>();
 
-            public class CustomCheckResultHandler : IHandleMessages<ReportCustomCheckResult>
+            public class CustomCheckResultHandler(Context scenarioContext) : IHandleMessages<ReportCustomCheckResult>
             {
-                readonly Context scenarioContext;
-                public CustomCheckResultHandler(Context scenarioContext)
-                {
-                    this.scenarioContext = scenarioContext;
-                }
-
                 public Task Handle(ReportCustomCheckResult message, IMessageHandlerContext context)
                 {
                     scenarioContext.CustomCheckResultHeaders = context.MessageHeaders;
                     scenarioContext.CustomCheckResult = message;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
         }

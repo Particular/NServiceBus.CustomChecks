@@ -31,32 +31,22 @@
 
         class Context : ScenarioContext
         {
-            public Queue<TransportOperations> Queue { get; } = new Queue<TransportOperations>();
+            public Queue<TransportOperations> Queue { get; } = new();
         }
 
         class Sender : EndpointConfigurationBuilder
         {
-            public Sender()
-            {
+            public Sender() =>
                 EndpointSetup<DefaultServer>(c =>
                 {
                     c.ReportCustomChecksTo("ServiceControl", TimeSpan.FromSeconds(6));
                     c.UseTransport(new InMemoryTransport());
                     c.SendOnly();
-                });
-            }
+                }).IncludeType<SuccessfulCustomCheck>();
 
-            class FailingCustomCheck : CustomCheck
+            class SuccessfulCustomCheck() : CustomCheck("SuccessfulCustomCheck", "CustomCheck")
             {
-                public FailingCustomCheck()
-                    : base("SuccessfulCustomCheck", "CustomCheck")
-                {
-                }
-
-                public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default)
-                {
-                    return CheckResult.Pass;
-                }
+                public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default) => CheckResult.Pass;
             }
         }
     }
