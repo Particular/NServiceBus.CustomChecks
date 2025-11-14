@@ -10,40 +10,29 @@
     class When_no_custom_checks_exist : NServiceBusAcceptanceTest
     {
         [Test]
-        public async Task The_endpoint_should_start_normally()
-        {
+        public async Task The_endpoint_should_start_normally() =>
             await Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When(ms => ms.SendLocal(new MyMessage())))
                 .Done(c => c.HandlerCalled)
                 .Run();
-        }
 
         class Context : ScenarioContext
         {
             public bool HandlerCalled { get; set; }
         }
 
-        public class MyMessage : ICommand { }
+        public class MyMessage : ICommand;
 
         class Sender : EndpointConfigurationBuilder
         {
-            public Sender()
-            {
-                EndpointSetup<DefaultServer>();
-            }
+            public Sender() => EndpointSetup<DefaultServer>();
 
-            public class MyMessageHandler : IHandleMessages<MyMessage>
+            public class MyMessageHandler(Context testContext) : IHandleMessages<MyMessage>
             {
-                Context testContext;
-
-                public MyMessageHandler(Context testContext)
-                {
-                    this.testContext = testContext;
-                }
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
                     testContext.HandlerCalled = true;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
         }
