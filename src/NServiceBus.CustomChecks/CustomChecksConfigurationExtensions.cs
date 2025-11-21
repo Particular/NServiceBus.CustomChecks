@@ -43,6 +43,8 @@
         {
             ArgumentNullException.ThrowIfNull(config);
 
+            //todo: revisit registerOnContainer
+
             if (registerOnContainer)
             {
                 config.RegisterComponents(c => c.AddTransient<TCustomCheck>());
