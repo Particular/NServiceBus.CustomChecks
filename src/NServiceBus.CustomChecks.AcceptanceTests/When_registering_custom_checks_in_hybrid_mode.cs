@@ -21,12 +21,12 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
             var context = await Scenario.Define<Context>()
                 .WithEndpoint<FakeServiceControl>()
                 .WithEndpoint<Sender>()
-                .Done(c => c.ReceivedCheckIds.Count >= 2)
+                .Done(c => c.ReceivedCheckIds.Contains("HybridManualCheck") && c.ReceivedCheckIds.Contains("ScannedCustomCheck"))
                 .Run();
 
             Assert.Multiple(() =>
             {
-                Assert.That(context.ReceivedCheckIds.Count, Is.EqualTo(2));
+                Assert.That(context.ReceivedCheckIds.Count, Is.GreaterThanOrEqualTo(2));
                 Assert.That(context.ReceivedCheckIds, Contains.Item("HybridManualCheck"));
                 Assert.That(context.ReceivedCheckIds, Contains.Item("ScannedCustomCheck"));
                 Assert.That(context.FailureReasons.All(f => f == null), Is.True);
@@ -63,7 +63,7 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
             class ScannedCustomCheck : CustomCheck
             {
                 public ScannedCustomCheck()
-                    : base("ScannedCustomCheck", "Scanned")
+                    : base("ScannedCustomCheck", "Scanned", TimeSpan.FromSeconds(1))
                 {
                 }
 
@@ -108,7 +108,7 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
     class HybridManualCheck : CustomCheck
     {
         public HybridManualCheck()
-            : base("HybridManualCheck", "Hybrid")
+            : base("HybridManualCheck", "Hybrid", TimeSpan.FromSeconds(1))
         {
         }
 
