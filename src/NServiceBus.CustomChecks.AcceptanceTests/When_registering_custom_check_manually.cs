@@ -66,9 +66,6 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
             {
                 IncludeType<ReportCustomCheckResult>();
 
-                // todo: mm review
-                ExcludeType<ManualOnlyCheck>();
-
                 EndpointSetup<DefaultServer>();
             }
 
