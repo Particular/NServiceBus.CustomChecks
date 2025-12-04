@@ -30,7 +30,7 @@ namespace NServiceBus
 {
     public static class CustomChecksConfigurationExtensions
     {
-        public static void AddCustomCheck<TCustomCheck>(this NServiceBus.EndpointConfiguration config, bool registerOnContainer = true)
+        public static void AddCustomCheck<TCustomCheck>(this NServiceBus.EndpointConfiguration config)
             where TCustomCheck :  class, NServiceBus.CustomChecks.ICustomCheck { }
         public static void ReportCustomChecksTo(this NServiceBus.EndpointConfiguration config, string serviceControlQueue, System.TimeSpan? timeToLive = default) { }
     }

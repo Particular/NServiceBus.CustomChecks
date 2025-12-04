@@ -35,20 +35,12 @@
         /// </summary>
         /// <typeparam name="TCustomCheck">The custom check type to add. Must implement ICustomCheck.</typeparam>
         /// <param name="config">The endpoint configuration to extend.</param>
-        /// <param name="registerOnContainer">
-        /// If true, registers the type in the DI container. If false, only registers for discovery.
-        /// </param>
-        public static void AddCustomCheck<TCustomCheck>(this EndpointConfiguration config, bool registerOnContainer = true)
+        public static void AddCustomCheck<TCustomCheck>(this EndpointConfiguration config)
             where TCustomCheck : class, ICustomCheck
         {
             ArgumentNullException.ThrowIfNull(config);
 
-            //todo: revisit registerOnContainer
-
-            if (registerOnContainer)
-            {
-                config.RegisterComponents(c => c.AddTransient<TCustomCheck>());
-            }
+            config.RegisterComponents(c => c.AddTransient<TCustomCheck>());
 
             config.GetSettings().GetOrCreate<CustomCheckRegistry>().AddCheck<TCustomCheck>();
         }

@@ -23,7 +23,7 @@ namespace NServiceBus.CustomChecks.Tests
         {
             var config = new EndpointConfiguration("TestEndpoint");
 
-            // Add custom check manually with default registerOnContainer=true
+            // Add custom check manually
             config.AddCustomCheck<TestCustomCheck>();
 
             // Verify the registry was created and stored in settings
@@ -54,25 +54,6 @@ namespace NServiceBus.CustomChecks.Tests
             Assert.That(registeredTypes, Contains.Item(typeof(TestCustomCheck)));
             Assert.That(registeredTypes, Contains.Item(typeof(AnotherTestCustomCheck)));
             Assert.That(registeredTypes.Count, Is.EqualTo(2));
-        }
-
-        /// <summary>
-        /// Verifies that custom checks can be registered without automatic DI container registration.
-        /// </summary>
-        [Test]
-        public void Should_add_custom_check_without_container_registration()
-        {
-            var config = new EndpointConfiguration("TestEndpoint");
-
-            // Add custom check manually without DI registration
-            config.AddCustomCheck<TestCustomCheck>(registerOnContainer: false);
-
-            // Verify the registry was created and stored in settings
-            var registry = config.GetSettings().Get<CustomCheckRegistry>(typeof(CustomCheckRegistry).FullName);
-            var registeredTypes = registry.GetAllCheckTypes();
-
-            // Assert the check was properly registered in the registry
-            Assert.That(registeredTypes, Contains.Item(typeof(TestCustomCheck)));
         }
 
         /// <summary>

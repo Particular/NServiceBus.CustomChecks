@@ -9,17 +9,19 @@
 
     class CustomChecksFeature : Feature
     {
+        public CustomChecksFeature()
+        {
+            // Ensure registry exists (created here for scanning-only scenarios, or already exists from manual registration)
+            Defaults(s => s.GetOrCreate<CustomCheckRegistry>());
+        }
+
         /// <summary>
         /// Sets up the CustomChecks feature using the central registry.
         /// </summary>
         protected override void Setup(FeatureConfigurationContext context)
         {
-            // GetOrCreate uses type-based key, so we need to check if registry was already created
-            var registryType = typeof(CustomCheckRegistry);
-            if (!context.Settings.TryGet(registryType.FullName, out CustomCheckRegistry registry))
-            {
-                registry = new();
-            }
+            // Get the registry (created by Defaults or by AddCustomCheck via GetOrCreate)
+            var registry = context.Settings.Get<CustomCheckRegistry>();
 
             // Add assembly scanned types to the registry
             registry.AddScannedTypes(context.Settings.GetAvailableTypes());
