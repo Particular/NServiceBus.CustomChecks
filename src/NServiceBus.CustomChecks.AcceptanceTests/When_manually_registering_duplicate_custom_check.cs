@@ -51,7 +51,7 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
                 })
                 .IncludeType<OurCustomCheck>(); //also as a scanned type
 
-            class OurCustomCheck() : CustomCheck("OurCustomCheck", "DuplicateCheck")
+            class OurCustomCheck() : CustomCheck("DuplicateCustomCheck", "DuplicateCheck")
             {
                 public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default) => CheckResult.Pass;
             }
