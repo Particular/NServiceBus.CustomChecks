@@ -32,7 +32,7 @@
         /// <summary>
         /// Manually registers a Custom Check
         /// </summary>
-        /// <typeparam name="TCustomCheck">The Custom Check type to add. Must implement ICustomCheck.</typeparam>
+        /// <typeparam name="TCustomCheck">The Custom Check type to add.</typeparam>
         /// <param name="config">The endpoint configuration to extend.</param>
         public static void AddCustomCheck<TCustomCheck>(this EndpointConfiguration config)
             where TCustomCheck : class, ICustomCheck
