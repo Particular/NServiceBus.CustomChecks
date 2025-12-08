@@ -32,8 +32,8 @@ namespace NServiceBus.CustomChecks.Tests
 
             var result = registry.GetAllCheckTypes().ToList();
 
-            Assert.That(result, Contains.Item(typeof(CheckA)));
-            Assert.That(result.Count, Is.EqualTo(1));
+            Assert.That(result, Has.Count.EqualTo(1).And.Contain(typeof(CheckA)));
+
         }
 
         [Test]
@@ -46,8 +46,8 @@ namespace NServiceBus.CustomChecks.Tests
             registry.AddScannedTypes(scannedTypes);
             var result = registry.GetAllCheckTypes().ToList();
 
-            Assert.That(result, Contains.Item(typeof(CheckA)));
-            Assert.That(result.Count, Is.EqualTo(1));
+            Assert.That(result, Has.Count.EqualTo(1).And.Contain(typeof(CheckA)));
+
         }
 
         [Test]
@@ -65,7 +65,7 @@ namespace NServiceBus.CustomChecks.Tests
         class CheckA : CustomCheck
         {
             public CheckA() : base("CheckA", "CategoryA") { }
-            public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default) => Task.FromResult(CheckResult.Pass);
+            public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default) => CheckResult.Pass;
         }
 
         abstract class AbstractCheck : CustomCheck
