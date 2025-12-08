@@ -44,12 +44,11 @@ namespace NServiceBus.CustomChecks.AcceptanceTests
 
                     c.ReportCustomChecksTo(receiverEndpoint);
 
-                    // Manually registering the same custom check multiple times
                     c.AddCustomCheck<OurCustomCheck>();
                     c.AddCustomCheck<OurCustomCheck>();
 
                 })
-                .IncludeType<OurCustomCheck>(); //also as a scanned type
+                .IncludeType<OurCustomCheck>();
 
             class OurCustomCheck() : CustomCheck("DuplicateCustomCheck", "DuplicateCheck")
             {
