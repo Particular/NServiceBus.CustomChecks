@@ -12,7 +12,7 @@
     {
         public CustomChecksFeature()
         {
-            Defaults(s => s.GetOrCreate<CustomChecksRegistry>());
+            Defaults(s => s.SetDefault(new CustomChecksRegistry()));
         }
 
         protected override void Setup(FeatureConfigurationContext context)
