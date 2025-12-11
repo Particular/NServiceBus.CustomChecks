@@ -1,7 +1,6 @@
-﻿namespace NServiceBus.CustomChecks
+namespace NServiceBus.CustomChecks
 {
     using System;
-    using System.Linq;
     using Features;
     using Hosting;
     using Microsoft.Extensions.DependencyInjection;
@@ -27,16 +26,13 @@
 
             context.RegisterStartupTask(b =>
             {
-                var customChecks = registry
-                    .GetAllCheckTypes()
-                    .Select(type => (ICustomCheck)ActivatorUtilities.CreateInstance(b, type))
-                    .ToList();
+                var wrappers = registry.ResolveWrappers(b);
 
                 // ReceiveAddresses is not registered on send-only endpoints
                 var backend = new ServiceControlBackend(serviceControlQueue, b.GetService<ReceiveAddresses>());
 
                 return new CustomChecksStartup(
-                    customChecks,
+                    wrappers,
                     b.GetRequiredService<IMessageDispatcher>(),
                     backend,
                     b.GetRequiredService<HostInformation>(),
