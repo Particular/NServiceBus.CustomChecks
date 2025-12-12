@@ -1,7 +1,6 @@
-﻿namespace NServiceBus.CustomChecks
+namespace NServiceBus.CustomChecks
 {
     using System;
-    using System.Linq;
     using Features;
     using Hosting;
     using Microsoft.Extensions.DependencyInjection;
@@ -10,13 +9,16 @@
 
     class CustomChecksFeature : Feature
     {
-        /// <summary>Called when the features is activated.</summary>
+        public CustomChecksFeature()
+        {
+            Defaults(s => s.SetDefault(new CustomChecksRegistry()));
+        }
+
         protected override void Setup(FeatureConfigurationContext context)
         {
-            context.Settings.GetAvailableTypes()
-                .Where(t => typeof(ICustomCheck).IsAssignableFrom(t) && !(t.IsAbstract || t.IsInterface))
-                .ToList()
-                .ForEach(t => context.Services.AddTransient(typeof(ICustomCheck), t));
+            var registry = context.Settings.Get<CustomChecksRegistry>();
+
+            registry.AddScannedTypes(context.Settings.GetAvailableTypes());
 
             context.Settings.TryGet("NServiceBus.CustomChecks.Ttl", out TimeSpan? ttl);
 
@@ -24,11 +26,13 @@
 
             context.RegisterStartupTask(b =>
             {
+                var wrappers = registry.ResolveWrappers(b);
+
                 // ReceiveAddresses is not registered on send-only endpoints
                 var backend = new ServiceControlBackend(serviceControlQueue, b.GetService<ReceiveAddresses>());
 
                 return new CustomChecksStartup(
-                    b.GetServices<ICustomCheck>(),
+                    wrappers,
                     b.GetRequiredService<IMessageDispatcher>(),
                     backend,
                     b.GetRequiredService<HostInformation>(),
