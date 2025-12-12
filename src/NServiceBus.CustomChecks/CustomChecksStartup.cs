@@ -9,7 +9,6 @@ namespace NServiceBus.CustomChecks
     using Hosting;
     using ServiceControl.Plugin.CustomChecks.Messages;
     using Transport;
-
     class CustomChecksStartup(
         IReadOnlyList<ICustomCheckWrapper> wrappers,
         IMessageDispatcher dispatcher,

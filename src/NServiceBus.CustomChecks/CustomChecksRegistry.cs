@@ -6,37 +6,38 @@ namespace NServiceBus.CustomChecks
 
     class CustomChecksRegistry
     {
-        readonly HashSet<Type> allCheckTypes = [];
+        readonly HashSet<ICustomCheckWrapper> wrappers = [];
 
         public void AddScannedTypes(IEnumerable<Type> availableTypes)
         {
             ArgumentNullException.ThrowIfNull(availableTypes);
-            
+
             foreach (var checkType in availableTypes.Where(IsCustomCheck))
             {
-                allCheckTypes.Add(checkType);
+                var wrapperType = typeof(CustomCheckWrapper<>).MakeGenericType(checkType);
+                var wrapper = (ICustomCheckWrapper)Activator.CreateInstance(wrapperType)!;
+                wrappers.Add(wrapper);
             }
         }
 
         static bool IsCustomCheck(Type t) => typeof(ICustomCheck).IsAssignableFrom(t) && !(t.IsAbstract || t.IsInterface);
 
-        public void AddCheck<TCustomCheck>() where TCustomCheck : class, ICustomCheck => allCheckTypes.Add(typeof(TCustomCheck));
+        public void AddCheck<TCustomCheck>() where TCustomCheck : class, ICustomCheck
+        {
+            var wrapper = new CustomCheckWrapper<TCustomCheck>();
+            wrappers.Add(wrapper);
+        }
 
-        public IEnumerable<Type> GetAllCheckTypes() => allCheckTypes.ToList();
+        public IEnumerable<Type> GetAllCheckTypes() => wrappers.Select(w => w.CheckType).ToList();
 
         public IReadOnlyList<ICustomCheckWrapper> ResolveWrappers(IServiceProvider provider)
         {
-            var wrappers = new List<ICustomCheckWrapper>(allCheckTypes.Count);
-
-            foreach (var checkType in allCheckTypes)
+            foreach (var wrapper in wrappers)
             {
-                var wrapperType = typeof(CustomCheckWrapper<>).MakeGenericType(checkType);
-                var wrapper = (ICustomCheckWrapper)Activator.CreateInstance(wrapperType)!;
                 wrapper.Initialize(provider);
-                wrappers.Add(wrapper);
             }
 
-            return wrappers;
+            return wrappers.ToList();
         }
     }
 }

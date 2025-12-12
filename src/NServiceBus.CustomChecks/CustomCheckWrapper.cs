@@ -1,3 +1,5 @@
+#nullable enable
+
 namespace NServiceBus.CustomChecks
 {
     using System;
@@ -6,11 +8,17 @@ namespace NServiceBus.CustomChecks
 
     sealed class CustomCheckWrapper<T> : ICustomCheckWrapper where T : ICustomCheck
     {
-        T instance;
+        T? instance;
 
-        public ICustomCheck Instance => instance;
+        public ICustomCheck Instance => instance!;
+
+        public Type CheckType { get; } = typeof(T);
 
         public void Initialize(IServiceProvider provider) => instance = ActivatorUtilities.CreateInstance<T>(provider);
+
+        public bool Equals(ICustomCheckWrapper? other) => other?.CheckType == CheckType;
+
+        public override int GetHashCode() => CheckType.GetHashCode();
 
         public async ValueTask DisposeAsync()
         {
