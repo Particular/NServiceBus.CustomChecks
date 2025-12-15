@@ -1,41 +1,40 @@
-﻿namespace NServiceBus.CustomChecks
+﻿namespace NServiceBus.CustomChecks;
+
+using System;
+using Features;
+using Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using NServiceBus;
+using Transport;
+
+sealed class CustomChecksFeature : Feature
 {
-    using System;
-    using Features;
-    using Hosting;
-    using Microsoft.Extensions.DependencyInjection;
-    using NServiceBus;
-    using Transport;
+    public CustomChecksFeature() => Defaults(s => s.SetDefault(new CustomChecksRegistry()));
 
-    class CustomChecksFeature : Feature
+    protected override void Setup(FeatureConfigurationContext context)
     {
-        public CustomChecksFeature() => Defaults(s => s.SetDefault(new CustomChecksRegistry()));
+        var registry = context.Settings.Get<CustomChecksRegistry>();
 
-        protected override void Setup(FeatureConfigurationContext context)
+        registry.AddScannedTypes(context.Settings.GetAvailableTypes());
+
+        context.Settings.TryGet("NServiceBus.CustomChecks.Ttl", out TimeSpan? ttl);
+
+        var serviceControlQueue = context.Settings.Get<string>("NServiceBus.CustomChecks.Queue");
+
+        context.RegisterStartupTask(sp =>
         {
-            var registry = context.Settings.Get<CustomChecksRegistry>();
+            var wrappers = registry.Initialize(sp);
 
-            registry.AddScannedTypes(context.Settings.GetAvailableTypes());
+            // ReceiveAddresses is not registered on send-only endpoints
+            var backend = new ServiceControlBackend(serviceControlQueue, sp.GetService<ReceiveAddresses>());
 
-            context.Settings.TryGet("NServiceBus.CustomChecks.Ttl", out TimeSpan? ttl);
-
-            var serviceControlQueue = context.Settings.Get<string>("NServiceBus.CustomChecks.Queue");
-
-            context.RegisterStartupTask(sp =>
-            {
-                var wrappers = registry.Initialize(sp);
-
-                // ReceiveAddresses is not registered on send-only endpoints
-                var backend = new ServiceControlBackend(serviceControlQueue, sp.GetService<ReceiveAddresses>());
-
-                return new CustomChecksStartup(
-                    wrappers,
-                    sp.GetRequiredService<IMessageDispatcher>(),
-                    backend,
-                    sp.GetRequiredService<HostInformation>(),
-                    context.Settings.EndpointName(),
-                    ttl);
-            });
-        }
+            return new CustomChecksStartup(
+                wrappers,
+                sp.GetRequiredService<IMessageDispatcher>(),
+                backend,
+                sp.GetRequiredService<HostInformation>(),
+                context.Settings.EndpointName(),
+                ttl);
+        });
     }
 }
