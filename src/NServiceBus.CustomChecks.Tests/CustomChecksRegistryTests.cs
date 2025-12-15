@@ -1,8 +1,5 @@
 namespace NServiceBus.CustomChecks.Tests
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using NServiceBus.CustomChecks;
@@ -15,13 +12,11 @@ namespace NServiceBus.CustomChecks.Tests
         public void Should_return_scanned_types()
         {
             var registry = new CustomChecksRegistry();
-            var scannedTypes = new List<Type> { typeof(CheckA) };
+            registry.AddScannedTypes([typeof(CheckA)]);
 
-            registry.AddScannedTypes(scannedTypes);
-            var result = registry.GetAllCheckTypes().ToList();
+            var result = registry.GetAllCheckTypes();
 
-            Assert.That(result, Contains.Item(typeof(CheckA)));
-            Assert.That(result.Count, Is.EqualTo(1));
+            Assert.That(result, Has.Count.EqualTo(1).And.Contain(typeof(CheckA)));
         }
 
         [Test]
@@ -30,7 +25,7 @@ namespace NServiceBus.CustomChecks.Tests
             var registry = new CustomChecksRegistry();
             registry.AddCheck<CheckA>();
 
-            var result = registry.GetAllCheckTypes().ToList();
+            var result = registry.GetAllCheckTypes();
 
             Assert.That(result, Has.Count.EqualTo(1).And.Contain(typeof(CheckA)));
 
@@ -41,10 +36,9 @@ namespace NServiceBus.CustomChecks.Tests
         {
             var registry = new CustomChecksRegistry();
             registry.AddCheck<CheckA>();
-            var scannedTypes = new List<Type> { typeof(CheckA) };
+            registry.AddScannedTypes([typeof(CheckA)]);
 
-            registry.AddScannedTypes(scannedTypes);
-            var result = registry.GetAllCheckTypes().ToList();
+            var result = registry.GetAllCheckTypes();
 
             Assert.That(result, Has.Count.EqualTo(1).And.Contain(typeof(CheckA)));
 
@@ -54,17 +48,15 @@ namespace NServiceBus.CustomChecks.Tests
         public void Should_filter_invalid_scanned_types()
         {
             var registry = new CustomChecksRegistry();
-            var scannedTypes = new List<Type> { typeof(string), typeof(AbstractCheck) };
+            registry.AddScannedTypes([typeof(string), typeof(AbstractCheck)]);
 
-            registry.AddScannedTypes(scannedTypes);
-            var result = registry.GetAllCheckTypes().ToList();
+            var result = registry.GetAllCheckTypes();
 
             Assert.That(result, Is.Empty);
         }
 
-        class CheckA : CustomCheck
+        class CheckA() : CustomCheck("CheckA", "CategoryA")
         {
-            public CheckA() : base("CheckA", "CategoryA") { }
             public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default) => CheckResult.Pass;
         }
 
