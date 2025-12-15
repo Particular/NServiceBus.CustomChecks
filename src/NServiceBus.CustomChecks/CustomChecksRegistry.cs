@@ -5,9 +5,9 @@ namespace NServiceBus.CustomChecks
     using System.Linq;
     using System.Reflection;
 
-    class CustomChecksRegistry
+    sealed class CustomChecksRegistry
     {
-        readonly HashSet<ICustomCheckWrapper> wrappers = [];
+        readonly HashSet<ICustomCheckWrapper> customChecks = [];
 
         public void AddScannedTypes(IEnumerable<Type> availableTypes)
         {
@@ -21,18 +21,18 @@ namespace NServiceBus.CustomChecks
 
         static bool IsCustomCheck(Type t) => typeof(ICustomCheck).IsAssignableFrom(t) && !(t.IsAbstract || t.IsInterface);
 
-        public void AddCheck<TCustomCheck>() where TCustomCheck : class, ICustomCheck => wrappers.Add(new CustomCheckWrapper<TCustomCheck>());
+        public void AddCheck<TCustomCheck>() where TCustomCheck : class, ICustomCheck => customChecks.Add(new CustomCheckWrapper<TCustomCheck>());
 
-        public IReadOnlyCollection<Type> GetAllCheckTypes() => [.. wrappers.Select(w => w.CheckType)];
+        public IReadOnlyCollection<Type> GetAllCheckTypes() => [.. customChecks.Select(w => w.CheckType)];
 
         public IReadOnlyCollection<ICustomCheckWrapper> Initialize(IServiceProvider provider)
         {
-            foreach (var wrapper in wrappers)
+            foreach (var check in customChecks)
             {
-                wrapper.Initialize(provider);
+                check.Initialize(provider);
             }
 
-            return [.. wrappers];
+            return [.. customChecks];
         }
 
         static readonly MethodInfo AddCustomCheckMethodInfo = typeof(CustomChecksRegistry).GetMethod(nameof(AddCheck))!;
