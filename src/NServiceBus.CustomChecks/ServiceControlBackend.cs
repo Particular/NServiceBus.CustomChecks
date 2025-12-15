@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,25 +10,28 @@ using Performance.TimeToBeReceived;
 using Routing;
 using Transport;
 
-class ServiceControlBackend(string destinationQueue, ReceiveAddresses receiveAddresses)
+sealed class ServiceControlBackend(string destinationQueue, ReceiveAddresses? receiveAddresses)
 {
     public Task Send(object messageToSend, TimeSpan timeToBeReceived, CancellationToken cancellationToken = default)
     {
         var body = Serialize(messageToSend);
-        return Send(body, messageToSend.GetType().FullName, timeToBeReceived, cancellationToken);
+        return Send(body, messageToSend.GetType().FullName!, timeToBeReceived, cancellationToken);
     }
 
     internal static byte[] Serialize(object messageToSend) => JsonSerializer.SerializeToUtf8Bytes(messageToSend);
 
+    [MemberNotNull(nameof(messageSender))]
     public void Start(IMessageDispatcher dispatcher) => messageSender = dispatcher;
 
     Task Send(byte[] body, string messageType, TimeSpan timeToBeReceived, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(messageSender);
+
         var headers = new Dictionary<string, string>
         {
             [Headers.EnclosedMessageTypes] = messageType,
             [Headers.ContentType] = ContentTypes.Json,
-            [Headers.MessageIntent] = sendIntent
+            [Headers.MessageIntent] = SendIntent
         };
         if (receiveAddresses != null)
         {
@@ -40,12 +44,10 @@ class ServiceControlBackend(string destinationQueue, ReceiveAddresses receiveAdd
             DiscardIfNotReceivedBefore = new DiscardIfNotReceivedBefore(timeToBeReceived)
         };
         var operation = new TransportOperation(outgoingMessage, new UnicastAddressTag(destinationQueue), dispatchProperties);
-        return messageSender?.Dispatch(new TransportOperations(operation), new TransportTransaction(), cancellationToken);
+        return messageSender.Dispatch(new TransportOperations(operation), new TransportTransaction(), cancellationToken);
     }
 
-    static string sendIntent = MessageIntent.Send.ToString();
+    const string SendIntent = nameof(MessageIntent.Send);
 
-    // this will be null on send-only endpoints
-
-    IMessageDispatcher messageSender;
+    IMessageDispatcher? messageSender;
 }
