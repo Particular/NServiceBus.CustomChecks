@@ -25,11 +25,23 @@ sealed class TimerBasedPeriodicCheck(
         timerTask = RunAndSwallowExceptions(stopTokenSource.Token);
     }
 
-    public Task Stop(CancellationToken cancellationToken = default)
+    public async Task Stop(CancellationToken cancellationToken = default)
     {
         stopTokenSource?.Cancel();
 
-        return timerTask ?? Task.CompletedTask;
+        if (timerTask is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await timerTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException e) when (cancellationToken.IsCancellationRequested)
+        {
+            Logger.Info($"Stopping of '{check.Id}' in '{check.Category}' cancelled.", e);
+        }
     }
 
     public ValueTask DisposeAsync()
@@ -54,7 +66,7 @@ sealed class TimerBasedPeriodicCheck(
                 }
                 catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
                 {
-                    Logger.Error("Custom check failed but can be retried.", ex);
+                    Logger.Error($"Custom check '{check.Id}' in '{check.Category}' failed but can be retried.", ex);
                 }
 
                 if (!check.Interval.HasValue)
@@ -67,18 +79,18 @@ sealed class TimerBasedPeriodicCheck(
             catch (Exception ex) when (ex.IsCausedBy(cancellationToken))
             {
                 // private token, check is being stopped, log the exception in case the stack trace is ever needed for debugging
-                Logger.Debug("Operation canceled while stopping custom check.", ex);
+                Logger.Debug($"Operation canceled while stopping custom check '{check.Id}' in '{check.Category}'.", ex);
                 break;
             }
             catch (Exception ex)
             {
-                Logger.Error("Custom check failed and cannot be retried.", ex);
+                Logger.Error($"Custom check '{check.Id}' failed and cannot be retried.", ex);
                 break;
             }
         }
     }
 
-    static async Task SendAndWarnOnFailure(ServiceControlBackend sender, ReportCustomCheckResult message, TimeSpan ttl, CancellationToken cancellationToken)
+    async Task SendAndWarnOnFailure(ServiceControlBackend sender, ReportCustomCheckResult message, TimeSpan ttl, CancellationToken cancellationToken)
     {
         try
         {
@@ -86,7 +98,7 @@ sealed class TimerBasedPeriodicCheck(
         }
         catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
         {
-            Logger.Warn("Failed to send periodic check to ServiceControl.", ex);
+            Logger.Warn($"Failed to send periodic check for '{check.Id}' in '{check.Category}' to ServiceControl.", ex);
         }
     }
 
@@ -98,7 +110,7 @@ sealed class TimerBasedPeriodicCheck(
         }
         catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
         {
-            var reason = $"'{check.GetType()}' implementation failed to run.";
+            var reason = $"'{check.GetType()}' implementation for custom check '{check.Id}' in '{check.Category}' failed to run.";
             Logger.Error(reason, ex);
             return CheckResult.Failed(reason);
         }
