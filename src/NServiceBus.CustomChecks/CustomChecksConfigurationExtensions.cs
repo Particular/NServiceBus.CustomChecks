@@ -28,5 +28,18 @@
                 config.GetSettings().Set("NServiceBus.CustomChecks.Ttl", timeToLive.Value);
             }
         }
+
+        /// <summary>
+        /// Manually registers a Custom Check
+        /// </summary>
+        /// <typeparam name="TCustomCheck">The Custom Check type to add.</typeparam>
+        /// <param name="config">The endpoint configuration to extend.</param>
+        public static void AddCustomCheck<TCustomCheck>(this EndpointConfiguration config)
+            where TCustomCheck : class, ICustomCheck
+        {
+            ArgumentNullException.ThrowIfNull(config);
+
+            config.GetSettings().GetOrCreate<CustomChecksRegistry>().AddCheck<TCustomCheck>();
+        }
     }
 }

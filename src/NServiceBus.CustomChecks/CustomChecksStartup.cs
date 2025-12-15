@@ -10,35 +10,32 @@
     using ServiceControl.Plugin.CustomChecks.Messages;
     using Transport;
 
-    class CustomChecksStartup : FeatureStartupTask
+    sealed class CustomChecksStartup(
+        IReadOnlyCollection<ICustomCheckWrapper> checks,
+        IMessageDispatcher dispatcher,
+        ServiceControlBackend backend,
+        HostInformation hostInfo,
+        string endpointName,
+        TimeSpan? ttl)
+        : FeatureStartupTask
     {
-        public CustomChecksStartup(IEnumerable<ICustomCheck> customChecks, IMessageDispatcher dispatcher, ServiceControlBackend backend, HostInformation hostInfo, string endpointName, TimeSpan? ttl)
-        {
-            this.backend = backend;
-            this.hostInfo = hostInfo;
-            this.endpointName = endpointName;
-            this.ttl = ttl;
-            this.dispatcher = dispatcher;
-            this.customChecks = customChecks.ToList();
-        }
-
         protected override Task OnStart(IMessageSession session, CancellationToken cancellationToken = default)
         {
-            if (!customChecks.Any())
+            if (checks.Count == 0)
             {
                 return Task.CompletedTask;
             }
 
-            timerPeriodicChecks = new List<TimerBasedPeriodicCheck>(customChecks.Count);
+            timerPeriodicChecks = new List<TimerBasedPeriodicCheck>(checks.Count);
             backend.Start(dispatcher);
 
-            foreach (var check in customChecks)
+            foreach (var check in checks)
             {
                 var checkTtl = check.Interval.HasValue
                     ? ttl ?? TimeSpan.FromTicks(check.Interval.Value.Ticks * 4)
                     : TimeSpan.MaxValue;
 
-                var timerBasedPeriodicCheck = new TimerBasedPeriodicCheck(check, backend, (result) => new ReportCustomCheckResult
+                var timerBasedPeriodicCheck = new TimerBasedPeriodicCheck(check, backend, result => new ReportCustomCheckResult
                 {
                     CustomCheckId = check.Id,
                     Category = check.Category,
@@ -60,20 +57,24 @@
 
         protected override async Task OnStop(IMessageSession session, CancellationToken cancellationToken = default)
         {
-            if (!customChecks.Any())
+            if (timerPeriodicChecks == null || timerPeriodicChecks.Count == 0)
             {
                 return;
             }
 
-            await Task.WhenAll(timerPeriodicChecks.Select(t => t.Stop()).ToArray()).ConfigureAwait(false);
+            try
+            {
+                await Task.WhenAll([.. timerPeriodicChecks.Select(t => t.Stop(cancellationToken))]).ConfigureAwait(false);
+            }
+            finally
+            {
+                foreach (var disposable in timerPeriodicChecks)
+                {
+                    await disposable.DisposeAsync().ConfigureAwait(false);
+                }
+            }
         }
 
-        List<ICustomCheck> customChecks;
-        IMessageDispatcher dispatcher;
         List<TimerBasedPeriodicCheck> timerPeriodicChecks;
-        ServiceControlBackend backend;
-        HostInformation hostInfo;
-        string endpointName;
-        TimeSpan? ttl;
     }
 }

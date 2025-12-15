@@ -6,24 +6,15 @@ namespace NServiceBus.CustomChecks
     using Logging;
     using ServiceControl.Plugin.CustomChecks.Messages;
 
-    class TimerBasedPeriodicCheck
+    sealed class TimerBasedPeriodicCheck(
+        ICustomCheckWrapper check,
+        ServiceControlBackend messageSender,
+        Func<CheckResult, ReportCustomCheckResult> messageFactory,
+        TimeSpan ttl) : IAsyncDisposable
     {
         static readonly ILog Logger = LogManager.GetLogger<TimerBasedPeriodicCheck>();
 
-        readonly ICustomCheck check;
-        readonly ServiceControlBackend messageSender;
-        readonly Func<CheckResult, ReportCustomCheckResult> messageFactory;
-        readonly TimeSpan ttl;
-
         CancellationTokenSource stopTokenSource;
-
-        public TimerBasedPeriodicCheck(ICustomCheck check, ServiceControlBackend messageSender, Func<CheckResult, ReportCustomCheckResult> messageFactory, TimeSpan ttl)
-        {
-            this.check = check;
-            this.messageSender = messageSender;
-            this.messageFactory = messageFactory;
-            this.ttl = ttl;
-        }
 
         public void Start()
         {
@@ -37,6 +28,12 @@ namespace NServiceBus.CustomChecks
             stopTokenSource?.Cancel();
 
             return Task.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            stopTokenSource?.Dispose();
+            return check.DisposeAsync();
         }
 
         async Task RunAndSwallowExceptions(CancellationToken cancellationToken)
