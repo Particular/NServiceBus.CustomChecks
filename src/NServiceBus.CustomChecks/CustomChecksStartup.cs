@@ -29,23 +29,25 @@ sealed class CustomChecksStartup(
         timerPeriodicChecks = new List<TimerBasedPeriodicCheck>(checks.Count);
         backend.Start(dispatcher);
 
+        var customCheckHostInfo = new CustomCheckHostInfo(endpointName, hostInfo.DisplayName, hostInfo.HostId);
+
         foreach (var check in checks)
         {
             var checkTtl = check.Interval.HasValue
                 ? ttl ?? TimeSpan.FromTicks(check.Interval.Value.Ticks * 4)
                 : TimeSpan.MaxValue;
 
-            var timerBasedPeriodicCheck = new TimerBasedPeriodicCheck(check, backend, result => new ReportCustomCheckResult
+            var timerBasedPeriodicCheck = new TimerBasedPeriodicCheck(check, backend, static (hostInfo, check, result) => new ReportCustomCheckResult
             {
                 CustomCheckId = check.Id,
                 Category = check.Category,
                 HasFailed = result.HasFailed,
                 FailureReason = result.FailureReason,
                 ReportedAt = DateTime.UtcNow,
-                EndpointName = endpointName,
-                Host = hostInfo.DisplayName,
+                EndpointName = hostInfo.EndpointName,
+                Host = hostInfo.HostDisplayName,
                 HostId = hostInfo.HostId
-            }, checkTtl);
+            }, checkTtl, customCheckHostInfo);
 
             timerBasedPeriodicCheck.Start();
 
@@ -57,7 +59,12 @@ sealed class CustomChecksStartup(
 
     protected override async Task OnStop(IMessageSession session, CancellationToken cancellationToken = default)
     {
-        if (timerPeriodicChecks == null || timerPeriodicChecks.Count == 0)
+        if (timerPeriodicChecks is null)
+        {
+            return;
+        }
+
+        if (timerPeriodicChecks.Count == 0)
         {
             return;
         }
@@ -75,5 +82,5 @@ sealed class CustomChecksStartup(
         }
     }
 
-    List<TimerBasedPeriodicCheck> timerPeriodicChecks;
+    List<TimerBasedPeriodicCheck>? timerPeriodicChecks;
 }

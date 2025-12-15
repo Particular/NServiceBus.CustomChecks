@@ -9,32 +9,34 @@ using ServiceControl.Plugin.CustomChecks.Messages;
 sealed class TimerBasedPeriodicCheck(
     ICustomCheckWrapper check,
     ServiceControlBackend messageSender,
-    Func<CheckResult, ReportCustomCheckResult> messageFactory,
-    TimeSpan ttl) : IAsyncDisposable
+    Func<CustomCheckHostInfo, ICustomCheck, CheckResult, ReportCustomCheckResult> messageFactory,
+    TimeSpan ttl,
+    CustomCheckHostInfo customCheckHostInfo) : IAsyncDisposable
 {
     static readonly ILog Logger = LogManager.GetLogger<TimerBasedPeriodicCheck>();
 
-    CancellationTokenSource stopTokenSource;
+    CancellationTokenSource? stopTokenSource;
+    Task? timerTask;
 
     public void Start()
     {
         stopTokenSource = new CancellationTokenSource();
 
-        _ = RunAndSwallowExceptions(stopTokenSource.Token);
+        timerTask = RunAndSwallowExceptions(stopTokenSource.Token);
     }
 
     public Task Stop(CancellationToken cancellationToken = default)
     {
         stopTokenSource?.Cancel();
 
-        return Task.CompletedTask;
+        return timerTask ?? Task.CompletedTask;
     }
 
     public ValueTask DisposeAsync()
     {
         stopTokenSource?.Dispose();
         return check.DisposeAsync();
-    }    
+    }
 
     async Task RunAndSwallowExceptions(CancellationToken cancellationToken)
     {
@@ -46,7 +48,7 @@ sealed class TimerBasedPeriodicCheck(
                 {
                     var result = await InvokeAndWrapFailure(check, cancellationToken).ConfigureAwait(false);
 
-                    var message = messageFactory(result);
+                    var message = messageFactory(customCheckHostInfo, check, result);
 
                     await SendAndWarnOnFailure(messageSender, message, ttl, cancellationToken).ConfigureAwait(false);
                 }

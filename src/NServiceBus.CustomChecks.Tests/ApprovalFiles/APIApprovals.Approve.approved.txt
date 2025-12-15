@@ -3,10 +3,13 @@ namespace NServiceBus.CustomChecks
 {
     public class CheckResult
     {
-        public static NServiceBus.CustomChecks.CheckResult Pass;
+        public static readonly NServiceBus.CustomChecks.CheckResult Pass;
         public CheckResult() { }
-        public string FailureReason { get; set; }
-        public bool HasFailed { get; set; }
+        [System.Diagnostics.CodeAnalysis.MemberNotNullWhen(true, "HasFailed")]
+        [get: System.Diagnostics.CodeAnalysis.MemberNotNullWhen(true, "HasFailed")]
+        [set: System.Diagnostics.CodeAnalysis.MemberNotNullWhen(true, "HasFailed")]
+        public string? FailureReason { get; }
+        public bool HasFailed { get; }
         public static NServiceBus.CustomChecks.CheckResult Failed(string reason) { }
         public static System.Threading.Tasks.Task<NServiceBus.CustomChecks.CheckResult> op_Implicit(NServiceBus.CustomChecks.CheckResult result) { }
     }
@@ -30,8 +33,11 @@ namespace NServiceBus
 {
     public static class CustomChecksConfigurationExtensions
     {
-        public static void AddCustomCheck<TCustomCheck>(this NServiceBus.EndpointConfiguration config)
-            where TCustomCheck :  class, NServiceBus.CustomChecks.ICustomCheck { }
-        public static void ReportCustomChecksTo(this NServiceBus.EndpointConfiguration config, string serviceControlQueue, System.TimeSpan? timeToLive = default) { }
+        extension(NServiceBus.EndpointConfiguration config)
+        {
+            public void ReportCustomChecksTo(string serviceControlQueue, System.TimeSpan? timeToLive = default) { }
+            public void AddCustomCheck<TCustomCheck>()
+                where TCustomCheck :  class, NServiceBus.CustomChecks.ICustomCheck { }
+        }
     }
 }
