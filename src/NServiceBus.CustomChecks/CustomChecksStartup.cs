@@ -1,4 +1,4 @@
-namespace NServiceBus.CustomChecks
+﻿namespace NServiceBus.CustomChecks
 {
     using System;
     using System.Collections.Generic;
@@ -9,8 +9,9 @@ namespace NServiceBus.CustomChecks
     using Hosting;
     using ServiceControl.Plugin.CustomChecks.Messages;
     using Transport;
-    class CustomChecksStartup(
-        IReadOnlyList<ICustomCheckWrapper> wrappers,
+
+    sealed class CustomChecksStartup(
+        IReadOnlyCollection<ICustomCheck> checks,
         IMessageDispatcher dispatcher,
         ServiceControlBackend backend,
         HostInformation hostInfo,
@@ -20,22 +21,21 @@ namespace NServiceBus.CustomChecks
     {
         protected override Task OnStart(IMessageSession session, CancellationToken cancellationToken = default)
         {
-            if (wrappers.Count == 0)
+            if (checks.Count == 0)
             {
                 return Task.CompletedTask;
             }
 
-            timerPeriodicChecks = new List<TimerBasedPeriodicCheck>(wrappers.Count);
+            timerPeriodicChecks = new List<TimerBasedPeriodicCheck>(checks.Count);
             backend.Start(dispatcher);
 
-            foreach (var wrapper in wrappers)
+            foreach (var check in checks)
             {
-                var check = wrapper.Instance;
                 var checkTtl = check.Interval.HasValue
                     ? ttl ?? TimeSpan.FromTicks(check.Interval.Value.Ticks * 4)
                     : TimeSpan.MaxValue;
 
-                var timerBasedPeriodicCheck = new TimerBasedPeriodicCheck(check, backend, (result) => new ReportCustomCheckResult
+                var timerBasedPeriodicCheck = new TimerBasedPeriodicCheck(check, backend, result => new ReportCustomCheckResult
                 {
                     CustomCheckId = check.Id,
                     Category = check.Category,
@@ -57,16 +57,21 @@ namespace NServiceBus.CustomChecks
 
         protected override async Task OnStop(IMessageSession session, CancellationToken cancellationToken = default)
         {
-            if (wrappers.Count == 0)
+            if (checks.Count == 0)
             {
                 return;
             }
 
-            await Task.WhenAll(timerPeriodicChecks.Select(t => t.Stop(cancellationToken)).ToArray()).ConfigureAwait(false);
-
-            foreach (var wrapper in wrappers)
+            try
             {
-                await wrapper.DisposeAsync().ConfigureAwait(false);
+                await Task.WhenAll(timerPeriodicChecks.Select(t => t.Stop(cancellationToken)).ToArray()).ConfigureAwait(false);
+            }
+            finally
+            {
+                foreach (var disposable in checks.OfType<IAsyncDisposable>())
+                {
+                    await disposable.DisposeAsync().ConfigureAwait(false);
+                }
             }
         }
 

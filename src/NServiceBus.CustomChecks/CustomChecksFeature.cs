@@ -1,4 +1,4 @@
-namespace NServiceBus.CustomChecks
+﻿namespace NServiceBus.CustomChecks
 {
     using System;
     using Features;
@@ -9,10 +9,7 @@ namespace NServiceBus.CustomChecks
 
     class CustomChecksFeature : Feature
     {
-        public CustomChecksFeature()
-        {
-            Defaults(s => s.SetDefault(new CustomChecksRegistry()));
-        }
+        public CustomChecksFeature() => Defaults(s => s.SetDefault(new CustomChecksRegistry()));
 
         protected override void Setup(FeatureConfigurationContext context)
         {
@@ -24,18 +21,18 @@ namespace NServiceBus.CustomChecks
 
             var serviceControlQueue = context.Settings.Get<string>("NServiceBus.CustomChecks.Queue");
 
-            context.RegisterStartupTask(b =>
+            context.RegisterStartupTask(sp =>
             {
-                var wrappers = registry.ResolveWrappers(b);
+                var wrappers = registry.Initialize(sp);
 
                 // ReceiveAddresses is not registered on send-only endpoints
-                var backend = new ServiceControlBackend(serviceControlQueue, b.GetService<ReceiveAddresses>());
+                var backend = new ServiceControlBackend(serviceControlQueue, sp.GetService<ReceiveAddresses>());
 
                 return new CustomChecksStartup(
                     wrappers,
-                    b.GetRequiredService<IMessageDispatcher>(),
+                    sp.GetRequiredService<IMessageDispatcher>(),
                     backend,
-                    b.GetRequiredService<HostInformation>(),
+                    sp.GetRequiredService<HostInformation>(),
                     context.Settings.EndpointName(),
                     ttl);
             });

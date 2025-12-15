@@ -3,6 +3,7 @@ namespace NServiceBus.CustomChecks
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
 
     class CustomChecksRegistry
     {
@@ -14,30 +15,26 @@ namespace NServiceBus.CustomChecks
 
             foreach (var checkType in availableTypes.Where(IsCustomCheck))
             {
-                var wrapperType = typeof(CustomCheckWrapper<>).MakeGenericType(checkType);
-                var wrapper = (ICustomCheckWrapper)Activator.CreateInstance(wrapperType)!;
-                wrappers.Add(wrapper);
+                _ = AddCustomCheckMethodInfo.MakeGenericMethod(checkType).Invoke(this, []);
             }
         }
 
         static bool IsCustomCheck(Type t) => typeof(ICustomCheck).IsAssignableFrom(t) && !(t.IsAbstract || t.IsInterface);
 
-        public void AddCheck<TCustomCheck>() where TCustomCheck : class, ICustomCheck
-        {
-            var wrapper = new CustomCheckWrapper<TCustomCheck>();
-            wrappers.Add(wrapper);
-        }
+        public void AddCheck<TCustomCheck>() where TCustomCheck : class, ICustomCheck => wrappers.Add(new CustomCheckWrapper<TCustomCheck>());
 
-        public IEnumerable<Type> GetAllCheckTypes() => wrappers.Select(w => w.CheckType).ToList();
+        public IReadOnlyCollection<Type> GetAllCheckTypes() => [.. wrappers.Select(w => w.CheckType)];
 
-        public IReadOnlyList<ICustomCheckWrapper> ResolveWrappers(IServiceProvider provider)
+        public IReadOnlyCollection<ICustomCheckWrapper> Initialize(IServiceProvider provider)
         {
             foreach (var wrapper in wrappers)
             {
                 wrapper.Initialize(provider);
             }
 
-            return wrappers.ToList();
+            return [.. wrappers];
         }
+
+        static readonly MethodInfo AddCustomCheckMethodInfo = typeof(CustomChecksRegistry).GetMethod(nameof(AddCheck))!;
     }
 }

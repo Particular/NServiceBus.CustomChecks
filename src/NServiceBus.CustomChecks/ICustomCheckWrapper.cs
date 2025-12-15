@@ -1,14 +1,9 @@
-namespace NServiceBus.CustomChecks
+namespace NServiceBus.CustomChecks;
+
+using System;
+
+interface ICustomCheckWrapper : ICustomCheck, IAsyncDisposable, IEquatable<ICustomCheckWrapper>
 {
-    using System;
-
-    interface ICustomCheckWrapper : IAsyncDisposable, IEquatable<ICustomCheckWrapper>
-    {
-        ICustomCheck Instance { get; }
-
-        Type CheckType { get; }
-
-        void Initialize(IServiceProvider provider);
-    }
+    Type CheckType { get; }
+    void Initialize(IServiceProvider provider);
 }
-
