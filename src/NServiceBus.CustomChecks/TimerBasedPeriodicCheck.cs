@@ -27,7 +27,10 @@ sealed class TimerBasedPeriodicCheck(
 
     public async Task Stop(CancellationToken cancellationToken = default)
     {
-        stopTokenSource?.Cancel();
+        if (stopTokenSource is not null)
+        {
+            await stopTokenSource.CancelAsync().ConfigureAwait(false);
+        }
 
         if (timerTask is null)
         {
