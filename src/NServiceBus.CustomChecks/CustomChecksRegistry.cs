@@ -31,7 +31,6 @@ sealed class CustomChecksRegistry
         {
             check.Initialize(provider);
         }
-
         return [.. customChecks];
     }
 
