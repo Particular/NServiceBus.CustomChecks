@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus;
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Configuration.AdvancedExtensibility;
 using CustomChecks;
 
@@ -35,7 +36,7 @@ public static class CustomChecksConfigurationExtensions
         /// Manually registers a Custom Check
         /// </summary>
         /// <typeparam name="TCustomCheck">The Custom Check type to add.</typeparam>
-        public void AddCustomCheck<TCustomCheck>()
+        public void AddCustomCheck<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCustomCheck>()
             where TCustomCheck : class, ICustomCheck
         {
             ArgumentNullException.ThrowIfNull(config);

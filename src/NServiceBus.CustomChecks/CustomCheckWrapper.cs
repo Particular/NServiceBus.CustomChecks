@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
-sealed class CustomCheckWrapper<T> : ICustomCheckWrapper
+sealed class CustomCheckWrapper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T> : ICustomCheckWrapper
     where T : ICustomCheck
 {
     T? instance;

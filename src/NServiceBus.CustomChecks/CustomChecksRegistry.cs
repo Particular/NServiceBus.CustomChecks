@@ -2,6 +2,7 @@ namespace NServiceBus.CustomChecks;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
@@ -21,7 +22,7 @@ sealed class CustomChecksRegistry
 
     static bool IsCustomCheck(Type t) => typeof(ICustomCheck).IsAssignableFrom(t) && !(t.IsAbstract || t.IsInterface);
 
-    public void AddCheck<TCustomCheck>() where TCustomCheck : class, ICustomCheck => customChecks.Add(new CustomCheckWrapper<TCustomCheck>());
+    public void AddCheck<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCustomCheck>() where TCustomCheck : class, ICustomCheck => customChecks.Add(new CustomCheckWrapper<TCustomCheck>());
 
     public IReadOnlyCollection<Type> GetAllCheckTypes() => [.. customChecks.Select(w => w.CheckType)];
 

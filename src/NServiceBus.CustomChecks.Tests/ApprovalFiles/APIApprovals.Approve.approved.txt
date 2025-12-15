@@ -36,7 +36,7 @@ namespace NServiceBus
         extension(NServiceBus.EndpointConfiguration config)
         {
             public void ReportCustomChecksTo(string serviceControlQueue, System.TimeSpan? timeToLive = default) { }
-            public void AddCustomCheck<TCustomCheck>()
+            public void AddCustomCheck<[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]  TCustomCheck>()
                 where TCustomCheck :  class, NServiceBus.CustomChecks.ICustomCheck { }
         }
     }
