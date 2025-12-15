@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.CustomChecks;
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Features;
 using Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ sealed class CustomChecksFeature : Feature
 {
     public CustomChecksFeature() => Defaults(s => s.SetDefault(new CustomChecksRegistry()));
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "AddScannedTypes is only used when the available types are filled.")]
     protected override void Setup(FeatureConfigurationContext context)
     {
         var registry = context.Settings.Get<CustomChecksRegistry>();

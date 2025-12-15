@@ -10,6 +10,7 @@ sealed class CustomChecksRegistry
 {
     readonly HashSet<ICustomCheckWrapper> customChecks = [];
 
+    [RequiresUnreferencedCode("Uses reflection to create instances of custom check types.")]
     public void AddScannedTypes(IEnumerable<Type> availableTypes)
     {
         ArgumentNullException.ThrowIfNull(availableTypes);
