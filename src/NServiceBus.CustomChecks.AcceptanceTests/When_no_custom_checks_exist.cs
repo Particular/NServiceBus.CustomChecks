@@ -1,39 +1,38 @@
-﻿namespace NServiceBus.CustomChecks.AcceptanceTests
+﻿namespace NServiceBus.CustomChecks.AcceptanceTests;
+
+using System.Threading.Tasks;
+using AcceptanceTesting;
+using NServiceBus;
+using NServiceBus.AcceptanceTests;
+using NServiceBus.AcceptanceTests.EndpointTemplates;
+using NUnit.Framework;
+
+class When_no_custom_checks_exist : NServiceBusAcceptanceTest
 {
-    using System.Threading.Tasks;
-    using AcceptanceTesting;
-    using NServiceBus;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
-    using NUnit.Framework;
+    [Test]
+    public async Task The_endpoint_should_start_normally() =>
+        await Scenario.Define<Context>()
+            .WithEndpoint<Sender>(b => b.When(ms => ms.SendLocal(new MyMessage())))
+            .Done(c => c.HandlerCalled)
+            .Run();
 
-    class When_no_custom_checks_exist : NServiceBusAcceptanceTest
+    class Context : ScenarioContext
     {
-        [Test]
-        public async Task The_endpoint_should_start_normally() =>
-            await Scenario.Define<Context>()
-                .WithEndpoint<Sender>(b => b.When(ms => ms.SendLocal(new MyMessage())))
-                .Done(c => c.HandlerCalled)
-                .Run();
+        public bool HandlerCalled { get; set; }
+    }
 
-        class Context : ScenarioContext
+    public class MyMessage : ICommand;
+
+    class Sender : EndpointConfigurationBuilder
+    {
+        public Sender() => EndpointSetup<DefaultServer>();
+
+        public class MyMessageHandler(Context testContext) : IHandleMessages<MyMessage>
         {
-            public bool HandlerCalled { get; set; }
-        }
-
-        public class MyMessage : ICommand;
-
-        class Sender : EndpointConfigurationBuilder
-        {
-            public Sender() => EndpointSetup<DefaultServer>();
-
-            public class MyMessageHandler(Context testContext) : IHandleMessages<MyMessage>
+            public Task Handle(MyMessage message, IMessageHandlerContext context)
             {
-                public Task Handle(MyMessage message, IMessageHandlerContext context)
-                {
-                    testContext.HandlerCalled = true;
-                    return Task.CompletedTask;
-                }
+                testContext.HandlerCalled = true;
+                return Task.CompletedTask;
             }
         }
     }
