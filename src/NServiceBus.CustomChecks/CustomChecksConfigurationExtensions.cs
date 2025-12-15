@@ -1,21 +1,23 @@
-﻿namespace NServiceBus
-{
-    using System;
-    using Configuration.AdvancedExtensibility;
-    using CustomChecks;
+﻿namespace NServiceBus;
 
-    /// <summary>
-    /// Plugin extension methods.
-    /// </summary>
-    public static class CustomChecksConfigurationExtensions
+using System;
+using Configuration.AdvancedExtensibility;
+using CustomChecks;
+
+/// <summary>
+/// Plugin extension methods.
+/// </summary>
+public static class CustomChecksConfigurationExtensions
+{
+    /// <param name="config">The endpoint configuration to modify.</param>
+    extension(EndpointConfiguration config)
     {
         /// <summary>
         /// Sets the ServiceControl queue address.
         /// </summary>
-        /// <param name="config">The endpoint configuration to modify.</param>
         /// <param name="serviceControlQueue">ServiceControl queue address.</param>
         /// <param name="timeToLive">The maximum time to live for the custom check report messages. Defaults to 4 times the check interval.</param>
-        public static void ReportCustomChecksTo(this EndpointConfiguration config, string serviceControlQueue, TimeSpan? timeToLive = null)
+        public void ReportCustomChecksTo(string serviceControlQueue, TimeSpan? timeToLive = null)
         {
             if (serviceControlQueue == null)
             {
@@ -33,8 +35,7 @@
         /// Manually registers a Custom Check
         /// </summary>
         /// <typeparam name="TCustomCheck">The Custom Check type to add.</typeparam>
-        /// <param name="config">The endpoint configuration to extend.</param>
-        public static void AddCustomCheck<TCustomCheck>(this EndpointConfiguration config)
+        public void AddCustomCheck<TCustomCheck>()
             where TCustomCheck : class, ICustomCheck
         {
             ArgumentNullException.ThrowIfNull(config);
