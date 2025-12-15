@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 /// <summary>
 /// The result of a check.
 /// </summary>
-public class CheckResult
+public sealed class CheckResult
 {
     /// <summary>
     /// <code>true</code> if it failed.
