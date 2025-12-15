@@ -11,7 +11,7 @@
     using Transport;
 
     sealed class CustomChecksStartup(
-        IReadOnlyCollection<ICustomCheck> checks,
+        IReadOnlyCollection<ICustomCheckWrapper> checks,
         IMessageDispatcher dispatcher,
         ServiceControlBackend backend,
         HostInformation hostInfo,
@@ -57,18 +57,18 @@
 
         protected override async Task OnStop(IMessageSession session, CancellationToken cancellationToken = default)
         {
-            if (checks.Count == 0)
+            if (timerPeriodicChecks == null || timerPeriodicChecks.Count == 0)
             {
                 return;
             }
 
             try
             {
-                await Task.WhenAll(timerPeriodicChecks.Select(t => t.Stop(cancellationToken)).ToArray()).ConfigureAwait(false);
+                await Task.WhenAll([.. timerPeriodicChecks.Select(t => t.Stop(cancellationToken))]).ConfigureAwait(false);
             }
             finally
             {
-                foreach (var disposable in checks.OfType<IAsyncDisposable>())
+                foreach (var disposable in timerPeriodicChecks)
                 {
                     await disposable.DisposeAsync().ConfigureAwait(false);
                 }
