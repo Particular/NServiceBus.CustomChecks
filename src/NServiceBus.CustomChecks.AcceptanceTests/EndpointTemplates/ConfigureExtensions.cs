@@ -1,44 +1,43 @@
-﻿namespace NServiceBus.AcceptanceTests.EndpointTemplates
+﻿namespace NServiceBus.AcceptanceTests.EndpointTemplates;
+
+using System.Threading.Tasks;
+using AcceptanceTesting.Support;
+using Configuration.AdvancedExtensibility;
+using Microsoft.Extensions.DependencyInjection;
+using Transport;
+
+public static class ConfigureExtensions
 {
-    using System.Threading.Tasks;
-    using AcceptanceTesting.Support;
-    using Configuration.AdvancedExtensibility;
-    using Microsoft.Extensions.DependencyInjection;
-    using Transport;
-
-    public static class ConfigureExtensions
+    public static async Task DefineTransport(this EndpointConfiguration config, RunDescriptor runDescriptor, EndpointCustomizationConfiguration endpointCustomizationConfiguration)
     {
-        public static async Task DefineTransport(this EndpointConfiguration config, RunDescriptor runDescriptor, EndpointCustomizationConfiguration endpointCustomizationConfiguration)
+        if (config.GetSettings().HasSetting<TransportDefinition>())
         {
-            if (config.GetSettings().HasSetting<TransportDefinition>())
-            {
-                return;
-            }
-            var transportConfiguration = new ConfigureEndpointLearningTransport();
-            await transportConfiguration.Configure(config);
-            runDescriptor.OnTestCompleted(_ => transportConfiguration.Cleanup());
+            return;
         }
+        var transportConfiguration = new ConfigureEndpointLearningTransport();
+        await transportConfiguration.Configure(config);
+        runDescriptor.OnTestCompleted(_ => transportConfiguration.Cleanup());
+    }
 
-        public static async Task DefinePersistence(this EndpointConfiguration config, RunDescriptor runDescriptor, EndpointCustomizationConfiguration endpointCustomizationConfiguration)
-        {
-            var persistenceConfiguration = new ConfigureEndpointLearningPersistence();
-            await persistenceConfiguration.Configure(config);
-            runDescriptor.OnTestCompleted(_ => persistenceConfiguration.Cleanup());
-        }
+    public static async Task DefinePersistence(this EndpointConfiguration config, RunDescriptor runDescriptor, EndpointCustomizationConfiguration endpointCustomizationConfiguration)
+    {
+        var persistenceConfiguration = new ConfigureEndpointLearningPersistence();
+        await persistenceConfiguration.Configure(config);
+        runDescriptor.OnTestCompleted(_ => persistenceConfiguration.Cleanup());
+    }
 
-        public static void RegisterComponentsAndInheritanceHierarchy(this EndpointConfiguration builder, RunDescriptor runDescriptor)
-        {
-            builder.RegisterComponents(r => { RegisterInheritanceHierarchyOfContextOnContainer(runDescriptor, r); });
-        }
+    public static void RegisterComponentsAndInheritanceHierarchy(this EndpointConfiguration builder, RunDescriptor runDescriptor)
+    {
+        builder.RegisterComponents(r => { RegisterInheritanceHierarchyOfContextOnContainer(runDescriptor, r); });
+    }
 
-        static void RegisterInheritanceHierarchyOfContextOnContainer(RunDescriptor runDescriptor, IServiceCollection r)
+    static void RegisterInheritanceHierarchyOfContextOnContainer(RunDescriptor runDescriptor, IServiceCollection r)
+    {
+        var type = runDescriptor.ScenarioContext.GetType();
+        while (type != typeof(object))
         {
-            var type = runDescriptor.ScenarioContext.GetType();
-            while (type != typeof(object))
-            {
-                r.AddSingleton(type, runDescriptor.ScenarioContext);
-                type = type.BaseType;
-            }
+            r.AddSingleton(type, runDescriptor.ScenarioContext);
+            type = type.BaseType;
         }
     }
 }

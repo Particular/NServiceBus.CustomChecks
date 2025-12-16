@@ -1,61 +1,60 @@
-﻿namespace NServiceBus.CustomChecks
+﻿namespace NServiceBus.CustomChecks;
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Performance.TimeToBeReceived;
+using Routing;
+using ServiceControl.Plugin.CustomChecks.Messages;
+using Transport;
+
+sealed class ServiceControlBackend
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text.Json;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Performance.TimeToBeReceived;
-    using Routing;
-    using Transport;
-
-    class ServiceControlBackend
+    public ServiceControlBackend(string destinationQueue, ReceiveAddresses? receiveAddresses)
     {
-        public ServiceControlBackend(string destinationQueue, ReceiveAddresses receiveAddresses)
+        destinationAddressTag = new UnicastAddressTag(destinationQueue);
+        headers = new Dictionary<string, string>
         {
-            this.destinationQueue = destinationQueue;
-            this.receiveAddresses = receiveAddresses;
-        }
-
-        public Task Send(object messageToSend, TimeSpan timeToBeReceived, CancellationToken cancellationToken = default)
+            [Headers.EnclosedMessageTypes] = typeof(ReportCustomCheckResult).FullName!,
+            [Headers.ContentType] = ContentTypes.Json,
+            [Headers.MessageIntent] = SendIntent
+        };
+        if (receiveAddresses != null)
         {
-            var body = Serialize(messageToSend);
-            return Send(body, messageToSend.GetType().FullName, timeToBeReceived, cancellationToken);
+            headers[Headers.ReplyToAddress] = receiveAddresses.MainReceiveAddress;
         }
-
-        internal static byte[] Serialize(object messageToSend) => JsonSerializer.SerializeToUtf8Bytes(messageToSend);
-
-        public void Start(IMessageDispatcher dispatcher)
-        {
-            messageSender = dispatcher;
-        }
-
-        Task Send(byte[] body, string messageType, TimeSpan timeToBeReceived, CancellationToken cancellationToken)
-        {
-            var headers = new Dictionary<string, string>
-            {
-                [Headers.EnclosedMessageTypes] = messageType,
-                [Headers.ContentType] = ContentTypes.Json,
-                [Headers.MessageIntent] = sendIntent
-            };
-            if (receiveAddresses != null)
-            {
-                headers[Headers.ReplyToAddress] = receiveAddresses.MainReceiveAddress;
-            }
-
-            var outgoingMessage = new OutgoingMessage(Guid.NewGuid().ToString(), headers, body);
-            var dispatchProperties = new DispatchProperties
-            {
-                DiscardIfNotReceivedBefore = new DiscardIfNotReceivedBefore(timeToBeReceived)
-            };
-            var operation = new TransportOperation(outgoingMessage, new UnicastAddressTag(destinationQueue), dispatchProperties);
-            return messageSender?.Dispatch(new TransportOperations(operation), new TransportTransaction(), cancellationToken);
-        }
-
-        static string sendIntent = MessageIntent.Send.ToString();
-        string destinationQueue;
-        readonly ReceiveAddresses receiveAddresses; // this will be null on send-only endpoints
-
-        IMessageDispatcher messageSender;
     }
+
+    public async Task Send(ReportCustomCheckResult messageToSend, TimeSpan timeToBeReceived, CancellationToken cancellationToken = default)
+    {
+        using var bufferWriter = new ArrayPoolBufferWriter<byte>();
+        var writer = new Utf8JsonWriter(bufferWriter);
+        await using var _ = writer.ConfigureAwait(false);
+        JsonSerializer.Serialize(writer, messageToSend, MessagesJsonContext.Default.ReportCustomCheckResult);
+        await Send(bufferWriter.WrittenMemory, timeToBeReceived, cancellationToken).ConfigureAwait(false);
+    }
+
+    [MemberNotNull(nameof(messageSender))]
+    public void Start(IMessageDispatcher dispatcher) => messageSender = dispatcher;
+
+    Task Send(ReadOnlyMemory<byte> body, TimeSpan timeToBeReceived, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(messageSender);
+
+        var outgoingMessage = new OutgoingMessage(Guid.NewGuid().ToString(), headers, body);
+        var dispatchProperties = new DispatchProperties
+        {
+            DiscardIfNotReceivedBefore = new DiscardIfNotReceivedBefore(timeToBeReceived)
+        };
+        var operation = new TransportOperation(outgoingMessage, destinationAddressTag, dispatchProperties);
+        return messageSender.Dispatch(new TransportOperations(operation), new TransportTransaction(), cancellationToken);
+    }
+
+    const string SendIntent = nameof(MessageIntent.Send);
+    readonly UnicastAddressTag destinationAddressTag;
+    IMessageDispatcher? messageSender;
+    readonly Dictionary<string, string> headers;
 }

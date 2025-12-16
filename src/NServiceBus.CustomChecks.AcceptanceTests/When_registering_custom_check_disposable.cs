@@ -1,7 +1,8 @@
 ﻿namespace NServiceBus.CustomChecks.AcceptanceTests;
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AcceptanceTesting;
@@ -12,36 +13,29 @@ using NServiceBus.AcceptanceTests.EndpointTemplates;
 using NUnit.Framework;
 using ServiceControl.Plugin.CustomChecks.Messages;
 
-public class When_registering_custom_check_in_send_only_endpoint : NServiceBusAcceptanceTest
+public class When_registering_custom_check_dispoable : NServiceBusAcceptanceTest
 {
     [Test]
-    public async Task Should_send_result_to_service_control()
+    public async Task Should_dispose_them()
     {
         var context = await Scenario.Define<Context>()
             .WithEndpoint<FakeServiceControl>()
             .WithEndpoint<Sender>()
-            .Done(c => c.WasCalled)
+            .Done(c => c.Checks.Contains("DisposableCheck") && c.Checks.Contains("AsyncDisposableCheck"))
             .Run();
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(context.WasCalled, Is.True);
-            Assert.That(context.FailureReason, Is.Null);
-            Assert.That(context.CustomCheckId, Is.EqualTo("SuccessfulCustomCheck"));
-            Assert.That(context.Category, Is.EqualTo("CustomCheck"));
-            Assert.That(context.ReportedAt, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(3.0)));
-            Assert.That(context.Headers.ContainsKey(Headers.ReplyToAddress), Is.False);
+            Assert.That(context.WasDisposed, Is.True);
+            Assert.That(context.WasAsyncDisposed, Is.True);
         }
     }
 
     class Context : ScenarioContext
     {
-        public bool WasCalled { get; set; }
-        public string FailureReason { get; set; }
-        public string CustomCheckId { get; set; }
-        public string Category { get; set; }
-        public DateTime ReportedAt { get; set; }
-        public IReadOnlyDictionary<string, string> Headers { get; set; }
+        public bool WasDisposed { get; set; }
+        public bool WasAsyncDisposed { get; set; }
+        public ConcurrentBag<string> Checks { get; set; } = [];
     }
 
     class Sender : EndpointConfigurationBuilder
@@ -50,13 +44,29 @@ public class When_registering_custom_check_in_send_only_endpoint : NServiceBusAc
             EndpointSetup<DefaultServer>(c =>
             {
                 var receiverEndpoint = AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(FakeServiceControl));
-                c.ReportCustomChecksTo(receiverEndpoint);
-                c.SendOnly();
-            }).IncludeType<SuccessfulCustomCheck>();
 
-        class SuccessfulCustomCheck() : CustomCheck("SuccessfulCustomCheck", "CustomCheck")
+                c.AddCustomCheck<AsyncDisposableCheck>();
+                c.AddCustomCheck<DisposableCheck>();
+
+                c.ReportCustomChecksTo(receiverEndpoint);
+            });
+
+        sealed class AsyncDisposableCheck(Context testContext) : CustomCheck("AsyncDisposableCheck", "Disposables"), IAsyncDisposable
         {
             public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default) => CheckResult.Pass;
+
+            public ValueTask DisposeAsync()
+            {
+                testContext.WasAsyncDisposed = true;
+                return ValueTask.CompletedTask;
+            }
+        }
+
+        sealed class DisposableCheck(Context testContext) : CustomCheck("DisposableCheck", "Disposables"), IDisposable
+        {
+            public override Task<CheckResult> PerformCheck(CancellationToken cancellationToken = default) => CheckResult.Pass;
+
+            public void Dispose() => testContext.WasDisposed = true;
         }
     }
 
@@ -72,12 +82,7 @@ public class When_registering_custom_check_in_send_only_endpoint : NServiceBusAc
         {
             public Task Handle(ReportCustomCheckResult message, IMessageHandlerContext context)
             {
-                testContext.FailureReason = message.FailureReason;
-                testContext.CustomCheckId = message.CustomCheckId;
-                testContext.Category = message.Category;
-                testContext.ReportedAt = message.ReportedAt;
-                testContext.Headers = context.MessageHeaders;
-                testContext.WasCalled = true;
+                testContext.Checks.Add(message.CustomCheckId);
                 return Task.CompletedTask;
             }
         }
