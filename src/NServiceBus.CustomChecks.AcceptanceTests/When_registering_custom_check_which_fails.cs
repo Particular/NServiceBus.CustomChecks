@@ -19,12 +19,10 @@ public class When_registering_custom_check_which_fails : NServiceBusAcceptanceTe
         var context = await Scenario.Define<Context>()
             .WithEndpoint<FakeServiceControl>()
             .WithEndpoint<Sender>()
-            .Done(c => c.WasCalled)
-            .Run(TimeSpan.FromSeconds(10));
+            .Run();
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(context.WasCalled, Is.True);
             Assert.That(context.FailureReason, Is.EqualTo("Some reason"));
             Assert.That(context.CustomCheckId, Is.EqualTo("FailingCustomCheck"));
             Assert.That(context.Category, Is.EqualTo("CustomCheck"));
@@ -34,7 +32,6 @@ public class When_registering_custom_check_which_fails : NServiceBusAcceptanceTe
 
     class Context : ScenarioContext
     {
-        public bool WasCalled { get; set; }
         public string FailureReason { get; set; }
         public string CustomCheckId { get; set; }
         public string Category { get; set; }
@@ -72,7 +69,7 @@ public class When_registering_custom_check_which_fails : NServiceBusAcceptanceTe
                 testContext.CustomCheckId = message.CustomCheckId;
                 testContext.Category = message.Category;
                 testContext.ReportedAt = message.ReportedAt;
-                testContext.WasCalled = true;
+                testContext.MarkAsCompleted();
                 return Task.CompletedTask;
             }
         }
