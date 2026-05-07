@@ -23,8 +23,6 @@ public class DefaultServer : IEndpointSetupTemplate
 
         await configuration.DefineTransport(runDescriptor, endpointConfiguration).ConfigureAwait(false);
 
-        configuration.RegisterComponentsAndInheritanceHierarchy(runDescriptor);
-
         await configuration.DefinePersistence(runDescriptor, endpointConfiguration).ConfigureAwait(false);
 
         // scan types at the end so that all types used by the configuration have been loaded into the AppDomain
