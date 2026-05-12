@@ -2,11 +2,12 @@
 using System.IO;
 using System.Threading.Tasks;
 using NServiceBus;
+using NServiceBus.AcceptanceTesting.Support;
 using NUnit.Framework;
 
-public class ConfigureEndpointLearningPersistence
+public class ConfigureEndpointLearningPersistence : AcceptanceTesting.Support.IConfigureEndpointTestExecution
 {
-    public Task Configure(EndpointConfiguration configuration)
+    public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {
         var testRunId = TestContext.CurrentContext.Test.ID;
 
