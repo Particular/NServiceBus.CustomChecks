@@ -11,23 +11,22 @@
   <ItemGroup>
     <PackageReference Include="GitHubActionsTestLogger" Version="3.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
-    <PackageReference Include="NServiceBus.AcceptanceTesting" Version="10.1.4" />
-    <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="10.1.4" GeneratePathProperty="true" />
     <PackageReference Include="NUnit" Version="4.6.0" />
     <PackageReference Include="NUnit.Analyzers" Version="4.13.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="6.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NServiceBus.AcceptanceTesting" Version="10.1.4" />
+    <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="10.1.4" GeneratePathProperty="true" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(PkgNServiceBus_AcceptanceTests_Sources)' != ''">
     <Compile Remove="$(PkgNServiceBus_AcceptanceTests_Sources)\**\*.cs" />
-
-    <Compile Include="$(PkgNServiceBus_AcceptanceTests_Sources)\contentFiles\cs\net10.0\NSB.AcceptanceTests\EndpointTemplates\ConfigureExtensions.cs" />
-    <Compile Include="$(PkgNServiceBus_AcceptanceTests_Sources)\contentFiles\cs\net10.0\NSB.AcceptanceTests\EndpointTemplates\DefaultPublisher.cs" />
-    <Compile Include="$(PkgNServiceBus_AcceptanceTests_Sources)\contentFiles\cs\net10.0\NSB.AcceptanceTests\EndpointTemplates\DefaultServer.cs" />
-    <Compile Include="$(PkgNServiceBus_AcceptanceTests_Sources)\contentFiles\cs\net10.0\NSB.AcceptanceTests\EndpointTemplates\IConfigureEndpointTestExecution.cs" />
-    <Compile Include="$(PkgNServiceBus_AcceptanceTests_Sources)\contentFiles\cs\net10.0\NSB.AcceptanceTests\EndpointTemplates\Requires.cs" />
-    <Compile Include="$(PkgNServiceBus_AcceptanceTests_Sources)\contentFiles\cs\net10.0\NSB.AcceptanceTests\EndpointTemplates\ServerWithNoDefaultPersistenceDefinitions.cs" />
-    <Compile Include="$(PkgNServiceBus_AcceptanceTests_Sources)\contentFiles\cs\net10.0\NSB.AcceptanceTests\EndpointTemplates\TestSuiteConstraints.cs" />
+    <Compile Include="$(PkgNServiceBus_AcceptanceTests_Sources)\contentFiles\cs\$(TargetFramework)\**\EndpointTemplates\*.cs" />
+    <Compile Include="$(PkgNServiceBus_AcceptanceTests_Sources)\contentFiles\cs\$(TargetFramework)\**\ConfigureEndpointAcceptanceTestingTransport.cs" />
+    <Compile Include="$(PkgNServiceBus_AcceptanceTests_Sources)\contentFiles\cs\$(TargetFramework)\**\ConfigureEndpointAcceptanceTestingPersistence.cs" />
+    <Compile Include="$(PkgNServiceBus_AcceptanceTests_Sources)\contentFiles\cs\$(TargetFramework)\**\NServiceBusAcceptanceTest.cs" />
   </ItemGroup>
 
 </Project>

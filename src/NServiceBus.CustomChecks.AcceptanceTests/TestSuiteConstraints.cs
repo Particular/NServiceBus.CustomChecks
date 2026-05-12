@@ -11,7 +11,9 @@ public partial class TestSuiteConstraints
     public bool SupportsOutbox => true;
     public bool SupportsPurgeOnStartup => true;
 
-    public IConfigureEndpointTestExecution CreateTransportConfiguration() => new ConfigureEndpointLearningTransport();
+    public IConfigureEndpointTestExecution CreateTransportConfiguration() =>
+        new ConfigureEndpointAcceptanceTestingTransport(SupportsNativePubSub, SupportsDelayedDelivery);
 
-    public IConfigureEndpointTestExecution CreatePersistenceConfiguration() => new ConfigureEndpointLearningPersistence();
+    public IConfigureEndpointTestExecution CreatePersistenceConfiguration() =>
+        new ConfigureEndpointAcceptanceTestingPersistence();
 }
